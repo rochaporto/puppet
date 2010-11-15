@@ -1,0 +1,35 @@
+# should the DPNS daemon run?
+# any string but "yes" will be equivalent to "no"
+#
+RUN_DPNSDAEMON="<%= dpm_ns_run %>"
+#
+# should the DPNS be read-only ?
+# any string but "yes" will be equivalent to "no"
+#
+RUN_READONLY="<%= dpm_ns_readonly %>"
+#
+# should we run with another limit on the number of file descriptors than the default?
+# any string will be passed to ulimit -n
+#ULIMIT_N=<%= dpm_ns_ulimit %>
+#
+###############################################################################################
+# Change and uncomment the variables below if your setup is different than the one by default #
+###############################################################################################
+
+#ALLOW_COREDUMP="<%= dpm_ns_coredump %>"
+
+##################
+# DPNS variables #
+##################
+
+# - Number of DPNS threads :
+#NB_THREADS=<%= dpm_ns_numthreads %>
+
+# - DPNS log file :
+#DPNSDAEMONLOGFILE="<%= dpm_ns_logfile %>"
+
+# - DPNS configuration file :
+export DPNS_HOST=<%= dpm_ns_host %>
+export DPM_HOST=<%= dpm_host %>
+NSCONFIGFILE=<%= dpm_ns_configfile %>
+
