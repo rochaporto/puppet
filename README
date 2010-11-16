@@ -1,0 +1,31 @@
+This package provides a set of modules to manage a DPM site using Puppet.
+
+WHAT IS PUPPET
+
+  Puppet has been developed to help the sysadmin community move to building 
+  and sharing mature tools that avoid the duplication of everyone solving 
+  the same problem.
+
+  You can find a lot more details at its website:
+  http://www.puppetlabs.com/
+
+WHAT IS DPM
+
+  DPM is the Disk Pool Manager, developed within the LHC Computing Grid (LCG) 
+  project. It provides a lightweight solution for disk storage manager, 
+  supporting commonly used grid protocols such as SRM, GRIDFTP, RFIO, ...
+
+  You can find a lot more details about this software on its website:
+  https://svnweb.cern.ch/trac/lcgdm/wiki/Dpm
+
+DOCUMENTATION
+
+  Modules are organized in the recommended puppet structure, inside 'modules':
+  <module-name>/files|lib|manifests|templates
+
+  In addition multiple configurations are available which corresponding to the
+  different testbed sites we run ourselves at CERN IT/GT/DMS.
+
+REQUIREMENTS
+
+  Current manifests require puppet 0.25 or above.
