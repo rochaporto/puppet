@@ -1,0 +1,28 @@
+#
+# Please change the following values according to your setup :
+#
+
+#
+# should globus-gridftp-server run?
+# any string but "yes" will equivalent to "NO"
+#
+RUN_DPMFTP="<%= dpm_gsiftp_run %>"
+#
+# DPM Name Server host : !!!!! please change !!!!!
+#
+
+#
+# DPM Server host : !!!!! please change !!!!!
+#
+
+# - GRIDFTP log file :
+#FTPLOGFILE=<%= dpm_gsiftp_logfile %>
+
+# - GRIDFTP data port range :
+#GLOBUS_TCP_PORT_RANGE="<%= dpm_gsiftp_portrange %>"
+
+# - GRIDFTP startup options
+#OPTIONS="<%= dpm_gsiftp_options %>"
+export DPNS_HOST=<%= dpm_ns_host %>
+export DPM_HOST=<%= dpm_host %>
+

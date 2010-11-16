@@ -1,38 +1,44 @@
-# should the dpm daemon run?
+#
+# should rfiod run?
 # any string but "yes" will equivalent to "NO"
 #
-RUN_DPMDAEMON="<%= dpm_run %>"
+RUN_RFIOD="<%= dpm_rfio_run %>"
 #
 # should we run with another limit on the number of file descriptors than the default?
 # any string will be passed to ulimit -n
-#ULIMIT_N=<%= dpm_ulimit %>
+#ULIMIT_N=<%= dpm_rfio_ulimit %>
 #
 ###############################################################################################
 # Change and uncomment the variables below if your setup is different than the one by default #
 ###############################################################################################
 
-#ALLOW_COREDUMP="<%= dpm_coredump %>"
-
-#################
-# DPM variables #
-#################
+######################
+# DPM RFIO variables #
+######################
 
 # - DPM Name Server host : please change !!!!!!
 
-# - DPM log file :
-#DPMDAEMONLOGFILE="<%= dpm_logfile %>"
+# - RFIO log file :
+#RFIOLOGFILE=<%= dpm_rfio_logfile %>
 
-# - DPM configuration file :
+###################
+# RFIO Port Range #
+###################
+
+# - RFIO port range :
+#RFIO_PORT_RANGE="<%= dpm_rfio_portrange %>"
 
 ###################
 # Globus variable #
 ###################
 
 # - gridmapdir location
-#GRIDMAPDIR=<%= dpm_gridmapdir %>
+#GRIDMAPDIR=<%= dpm_rfio_gridmapdir %>
+
+#########################
+# RFIOD Startup Options #
+#########################
+
+#OPTIONS="<%= dpm_rfio_options %>"
 export DPNS_HOST=<%= dpm_ns_host %>
 export DPM_HOST=<%= dpm_host %>
-DPMCONFIGFILE=<%= dpm_configfile %>
-~
-~
-
