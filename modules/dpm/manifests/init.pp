@@ -75,6 +75,40 @@ class dpm {
 		gid     => 'dpmmgr', 
 		ensure  => present,
   	}
+
+	file { '/etc/grid-security/dpmmgr':
+		owner => dpmmgr,
+		group => dpmmgr,
+		mode => 755,
+		ensure => directory,
+	}
+
+	file { '/etc/grid-security/dpmmgr/dpmcert.pem':
+		owner => dpmmgr,
+		group => dpmmgr,
+		mode => 644,
+		source => '/etc/grid-security/hostcert.pem',
+	}
+
+	file { '/etc/grid-security/dpmmgr/dpmkey.pem':
+		owner => dpmmgr,
+		group => dpmmgr,
+		mode => 400,
+		source => '/etc/grid-security/hostkey.pem',
+	}
+
+	file { '/opt/lcg/etc':
+		owner => root,
+		group => root,
+		ensure => directory,
+	}
+
+	file { '/opt/lcg/etc/lcgdm-mapfile':
+		owner => dpmmgr,
+		group => dpmmgr,
+		mode => 600,
+		ensure => present,
+	}
   }
 
   class headnode {

@@ -73,6 +73,7 @@ $dpm_ns_numthreads = 20
 node default {
 	include dms::unstable
 	include voms::atlas
+	include voms::dteam
 }
 
 node 'vmdm0001.cern.ch' inherits default {

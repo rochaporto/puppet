@@ -21,7 +21,7 @@ class voms {
   }
 
   define server($vo, $server, $port, $dn, $ca_dn) {
-	file { "voms_lsc_$vo_$server":
+	file { "voms_lsc_$vo-$server":
 		path => "/etc/grid-security/vomsdir/$vo/$server.lsc",
 		owner => root,
 		group => root,
@@ -46,6 +46,33 @@ class voms {
 		server => "lcg-voms.cern.ch",
 		port => 15001,
 		dn => ['/DC=ch/DC=cern/OU=computers/CN=lcg-voms.cern.ch'],
+		ca_dn => ['/DC=ch/DC=cern/CN=CERN Trusted Certification Authority'],
+	}
+  }
+
+  class dteam {
+	include voms
+
+	voms::vo { "dteam": }
+	voms::server { "voms_dteam_cern":
+		vo => "dteam",
+		server => "voms.cern.ch",
+		port => 15001,
+		dn => ['/DC=ch/DC=cern/OU=computers/CN=voms.cern.ch'],
+		ca_dn => ['/DC=ch/DC=cern/CN=CERN Trusted Certification Authority'],
+	}
+	voms::server { "voms_dteam_lcg":
+		vo => "dteam",
+		server => "lcg-voms.cern.ch",
+		port => 15001,
+		dn => ['/DC=ch/DC=cern/OU=computers/CN=lcg-voms.cern.ch'],
+		ca_dn => ['/DC=ch/DC=cern/CN=CERN Trusted Certification Authority'],
+	}
+	voms::server { "voms_dteam_tbed":
+		vo => "dteam",
+		server => "lxbra2309.cern.ch",
+		port => 15004,
+		dn => ['/DC=ch/DC=cern/OU=computers/CN=lxbra2309.cern.ch'],
 		ca_dn => ['/DC=ch/DC=cern/CN=CERN Trusted Certification Authority'],
 	}
   }
