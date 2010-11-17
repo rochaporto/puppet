@@ -67,6 +67,8 @@ $dpm_ns_configfile = "/opt/lcg/etc/NSCONFIG"
 $dpm_ns_logfile = "/var/log/dpns/log" 
 $dpm_ns_numthreads = 20 
 
+$disk_nodes = ['vmdm0008.cern.ch']
+
 #
 # Node definition
 #
@@ -78,8 +80,17 @@ node default {
 
 node 'vmdm0001.cern.ch' inherits default {
 	include dpm::headnode
+
+	# setup supported domain/vo(s)
+	dpm::headnode::domain { 'cern.ch': }
+	dpm::headnode::vo { 'dteam': domain => 'cern.ch' }
+	dpm::headnode::pool { 'pool1': }
 }
 
 node 'vmdm0008.cern.ch' inherits default {
 	include dpm::disknode
+
+	# setup filesystems (we use loopback partitions as this is a testing VM machine)
+	dpm::disknode::loopback { '/dpmfs/fs1': blocks => 15000, }
+	dpm::disknode::filesystem { '/dpmfs/fs1': pool => 'pool1', }
 }

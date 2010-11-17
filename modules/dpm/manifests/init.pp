@@ -115,11 +115,75 @@ class dpm {
 	include nameserver
 	include dpm
 	include srm
+	include client
+
+	file { 'headnode-shiftconf':
+		path => '/etc/shift.conf',
+		owner => root,
+		group => root,
+		mode  => 644,
+		content => template("dpm/headnode-shift.erb"),
+	}
+
+	define domain {
+		exec { "dpm_domain_$dpm_ns_host-$name":
+			path => "/usr/bin:/usr/sbin:/bin:/opt/lcg/bin",
+			environment => "DPNS_HOST=$dpm_ns_host",
+			command => "dpns-mkdir -p /dpm/$name",
+			unless => "dpns-ls /dpm/$name",
+		}
+  	}
+
+	define vo($domain) {
+		$vo_path = "/dpm/$domain/home/$name"
+		exec { "dpm_vo_$dpm_ns_host-$domain-$name":
+			path => "/usr/bin:/usr/sbin:/bin:/opt/lcg/bin",
+			environment => "DPNS_HOST=$dpm_ns_host",
+			command => "dpns-mkdir -p $vo_path; dpns-chmod 755 $vo_path; dpns-entergrpmap --group $name; dpns-chown root:$name $vo_path; dpns-setacl -m d:u::7,d:g::7,d:o:5 $vo_path",
+			unless => "dpns-ls /dpm/$domain/home/$name",
+		}
+	}
+
+	define pool {
+		exec { "dpm_pool_$dpm_host-$name":
+			path => "/usr/bin:/usr/sbin:/bin:/opt/lcg/bin",
+			environment => "DPM_HOST=$dpm_host",
+			command => "dpm-addpool --poolname $name",
+			unless => "dpm-qryconf | grep 'POOL $name '",
+		}
+	}
   }
 
   class disknode {
 	include gridftp
 	include rfio
+	include client
+
+	file { 'disknode-shiftconf':
+		path => '/etc/shift.conf',
+		owner => root,
+		group => root,
+		mode  => 644,
+		content => template("dpm/disknode-shift.erb"),
+	}
+
+	define loopback($blocks, $bs='1M', $type='ext3') {
+		$file = "$name-partition-file"
+		exec { "dpm_loopback_$fqdn-$name":
+			path => "/usr/bin:/usr/sbin:/bin",
+			command => "mkdir -p $name; dd if=/dev/zero of=$file bs=$bs count=$blocks; mkfs.$type -F $file",
+			unless => "ls -l $name",
+		}
+	}
+
+	define filesystem($pool) {
+		exec { "dpm_filesystem_$fqdn-$name":
+			path => "/usr/bin:/usr/sbin:/bin:/opt/lcg/bin",
+			environment => "DPM_HOST=$dpm_host",
+			command => "dpm-addfs --poolname $pool --server $fqdn --fs $name",
+			unless => "dpm-qryconf | grep '  $fqdn $name '",
+		}
+	}
   }
 
   class dpm inherits base {
@@ -287,7 +351,7 @@ class dpm {
   class gridftp inherits base {
   	include glite
 
-	package { ['DPM-DSI', 'vdt_globus_data_server']:
+	package { ['DPM-DSI', 'vdt_globus_data_server', 'dpm-devel']: # dpm-devel only need due to missing dep in DPM-DSI
 			ensure=> latest,
 	}
 
