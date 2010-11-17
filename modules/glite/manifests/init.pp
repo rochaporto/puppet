@@ -16,4 +16,10 @@ class glite {
 	content => '/opt/globus/lib',	
   }
 
+  exec { 'glite_ldconfig':
+	path => "/usr/bin:/usr/sbin:/bin:/sbin",
+	command => 'ldconfig',
+	subscribe => [ File['glite_ldconf'], File['globus_ldconf'] ],
+	refreshonly => true,
+  }
 }

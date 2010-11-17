@@ -1,13 +1,14 @@
 class mysql {
 
 	class server {
-		package { "mysql-server": ensure => latest }
+		package { ['mysql', 'mysql-server']: ensure => latest }
 
 		define grant($user, $password, $db, $host='localhost') {
 			exec { "mysql_user_grant_$user_$db":
 				path => "/usr/bin:/usr/sbin:/bin",
 				command => "mysql -uroot -e \"grant all privileges on $db.* to '$user'@'$host' identified by '$password'\"",
 				unless => "mysql -u$user -p$password -D$db -h$host",
+				require => Service['mysqld'],
 			}
 		}
 	
@@ -16,6 +17,7 @@ class mysql {
 				path => "/usr/bin:/usr/sbin:/bin",
 				command => "mysql -uroot < $source",
 				unless => "mysql -uroot -e \"use $name\"",
+				require => Service['mysqld'],
 			}
 		}
 
@@ -24,6 +26,7 @@ class mysql {
 			ensure => running,
 			hasrestart => true,
 			hasstatus => true,
+			require => Package['mysql-server', 'mysql'],
 		}
 	}
 }

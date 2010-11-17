@@ -2,6 +2,7 @@
 # dpm/init.pp
 #
 import 'glite'
+import 'mysql'
 
 #
 # Class: dpm
@@ -62,6 +63,7 @@ import 'glite'
 class dpm {
 
   class base {
+	include glite
 	package { ['vdt_globus_essentials']: ensure => latest }
 
   	group { 'dpmmgr': 
@@ -74,6 +76,7 @@ class dpm {
 		uid     => 151, 
 		gid     => 'dpmmgr', 
 		ensure  => present,
+		require => Group['dpmmgr'],
   	}
 
 	file { '/etc/grid-security/dpmmgr':
@@ -88,6 +91,7 @@ class dpm {
 		group => dpmmgr,
 		mode => 644,
 		source => '/etc/grid-security/hostcert.pem',
+		require => File['/etc/grid-security/dpmmgr'],
 	}
 
 	file { '/etc/grid-security/dpmmgr/dpmkey.pem':
@@ -95,12 +99,7 @@ class dpm {
 		group => dpmmgr,
 		mode => 400,
 		source => '/etc/grid-security/hostkey.pem',
-	}
-
-	file { '/opt/lcg/etc':
-		owner => root,
-		group => root,
-		ensure => directory,
+		require => File['/etc/grid-security/dpmmgr'],
 	}
 
 	file { '/opt/lcg/etc/lcgdm-mapfile':
@@ -108,7 +107,267 @@ class dpm {
 		group => dpmmgr,
 		mode => 600,
 		ensure => present,
+		recurse => true,
 	}
+  }
+
+  class dpm inherits base {
+  	include glite
+	include mysql
+	include mysql::server
+
+	package { ['DPM-server-mysql']:	ensure=> latest, }
+
+	file { 'dpm-config':
+		path => $operatingsytem ? {
+			default => $dpm_configfile,
+		},
+		owner => dpmmgr,
+		group => dpmmgr,
+		mode  => 600,
+		content => template("dpm/dpm-config.erb"),
+		require => Package['DPM-server-mysql'],
+	}
+
+	file { 'dpm-sysconfig':
+		name => $operatingsystem ? {
+			default => '/etc/sysconfig/dpm',
+		},
+		owner => root,
+		group => root,
+		mode  => 644,
+		content => template("dpm/dpm-sysconfig.erb"),
+	}
+
+	file { 'dpm-logfile':
+		name => $operatingsystem ? {
+			default => $dpm_logfile,
+		},
+		ensure => present,
+		owner => dpmmgr,
+		group => dpmmgr,
+		mode  => 644,
+		recurse => true,
+	}
+
+	mysql::server::grant { "dpm_db_$dpm_dbuser":
+		user => $dpm_dbuser,
+		password => $dpm_dbpass,
+		db => "dpm_db",
+		require => Mysql::Server::Db['dpm_db'],
+	}
+
+	mysql::server::db { 'dpm_db':
+		source => '/opt/lcg/share/DPM/create_dpm_tables_mysql.sql',
+	}
+
+	service { 'dpm':
+		enable => true,
+		ensure => running,
+		subscribe => File['dpm-config', 'dpm-sysconfig'],
+		require => [ Package['DPM-server-mysql'], File['dpm-config'], File['dpm-sysconfig'], 
+			File['dpm-logfile'], Mysql::Server::Grant["dpm_db_$dpm_dbuser"], Mysql::Server::Db['dpm_db'] ],
+	}
+
+  }
+
+  class nameserver inherits base {
+  	include glite
+	include mysql
+	include mysql::server
+
+	package { ['DPM-name-server-mysql']: ensure=> latest, }
+
+	file { 'dpns-config':
+		name => $operatingsytem ? {
+			default => $dpm_ns_configfile,
+		},
+		owner => dpmmgr,
+		group => dpmmgr,
+		mode  => 600,
+		content => template("dpm/dpns-config.erb"),
+		require => Package['DPM-name-server-mysql'],
+	}
+
+	file { 'dpns-sysconfig':
+		name => $operatingsystem ? {
+			default => '/etc/sysconfig/dpnsdaemon',
+		},
+		owner => root,
+		group => root,
+		mode  => 644,
+		content => template("dpm/dpns-sysconfig.erb"),
+	}
+
+	file { 'dpns-logfile':
+		name => $operatingsystem ? {
+			default => $dpm_ns_logfile,
+		},
+		ensure => present,
+		owner => dpmmgr,
+		group => dpmmgr,
+		mode  => 644,
+		recurse => true,
+	}
+
+	mysql::server::grant { "cns_db_$dpm_ns_dbuser":
+		user => $dpm_ns_dbuser,
+		password => $dpm_ns_dbpass,
+		db => "cns_db",
+		require => Mysql::Server::Db['cns_db'],
+	}
+
+	mysql::server::db { 'cns_db':
+		source => '/opt/lcg/share/DPM/create_dpns_tables_mysql.sql',
+	}
+
+	service { 'dpns':
+		enable => true,
+		ensure => running,
+		name => 'dpnsdaemon',
+		subscribe => File['dpns-config', 'dpns-sysconfig'],
+		require => [ Package['DPM-name-server-mysql'], File['dpns-config'], File['dpns-sysconfig'], 
+			File['dpns-logfile'], Mysql::Server::Grant["cns_db_$dpm_ns_dbuser"], Mysql::Server::Db['cns_db'] ],
+	}
+
+  }
+		
+
+  class srm inherits base {
+  	include glite
+
+	package { ['DPM-srm-server-mysql']: ensure=> latest, }
+
+	file { 'srm-sysconfig':
+		name => $operatingsystem ? {
+			default => '/etc/sysconfig/srmv2.2',
+		},
+		owner => root,
+		group => root,
+		mode  => 644,
+		content => template("dpm/srm-sysconfig.erb"),
+	}
+
+	file { 'srm-logdir': # required to fix missing dir in the srmv2.2 rpm
+		name => '/var/log/srmv2.2',
+		owner => dpmmgr,
+		group => dpmmgr,
+		mode => 644,
+		ensure => directory,
+	}
+
+	file { 'srm-logfile':
+		name => $operatingsystem ? {
+			default => $dpm_srm_logfile,
+		},
+		ensure => present,
+		owner => dpmmgr,
+		group => dpmmgr,
+		mode  => 644,
+		recurse => true,
+	}
+
+	service { 'srm':
+		enable => true,
+		ensure => running,
+		name => 'srmv2.2',
+		subscribe => File['srm-sysconfig'],
+		require => [ Service['dpm'], Service['dpns'], Package['DPM-srm-server-mysql'], 
+			File['srm-sysconfig'], File['srm-logdir'], File['srm-logfile'] ],
+	}
+
+  }
+
+  class gridftp inherits base {
+  	include glite
+	
+	# TODO: dpm-devel only need due to missing dep in DPM-DSI
+	package { ['DPM-DSI', 'vdt_globus_data_server', 'dpm-devel']: ensure=> latest, }
+
+	file { 'dpm-gsiftp-sysconfig':
+		name => $operatingsystem ? {
+			default => '/etc/sysconfig/dpm-gsiftp',
+		},
+		owner => root,
+		group => root,
+		mode  => 644,
+		content => template("dpm/dpm-gsiftp-sysconfig.erb"),
+	}
+
+	file { 'dpm-gsiftp-logdir': # required to fix missing dir in the rfio rpm
+		name => '/var/log/dpm-gsiftp',
+		owner => root,
+		group => root,
+		mode => 644,
+		ensure => directory,
+	}
+
+	file { 'dpm-gsiftp-logfile':
+		name => $operatingsystem ? {
+			default => $dpm_gsiftp_logfile,
+		},
+		ensure => present,
+		owner => root,
+		group => root,
+		mode  => 666,
+		recurse => inf,
+	}
+
+	service { 'dpm-gsiftp':
+		enable => true,
+		ensure => running,
+		subscribe => File['dpm-gsiftp-sysconfig'],
+		require => [ Package['DPM-DSI'], File['dpm-gsiftp-sysconfig'], File['dpm-gsiftp-logdir'],
+			File['dpm-gsiftp-logfile'] ],
+	}
+
+  }
+
+  class rfio inherits base {
+  	include glite
+
+	package { ['DPM-rfio-server']: ensure=> latest, }
+
+	file { 'rfio-sysconfig':
+		name => $operatingsystem ? {
+			default => '/etc/sysconfig/rfiod',
+		},
+		owner => root,
+		group => root,
+		mode  => 644,
+		content => template("dpm/rfio-sysconfig.erb"),
+	}
+
+	file { 'rfio-logdir': # required to fix missing dir in the rfio rpm
+		name => '/var/log/rfio',
+		owner => root,
+		group => root,
+		mode => 644,
+		ensure => directory,
+	}
+
+	file { 'rfio-logfile':
+		name => $operatingsystem ? {
+			default => $dpm_rfio_logfile,
+		},
+		ensure => present,
+		owner => dpmmgr,
+		group => dpmmgr,
+		mode  => 666,
+		recurse => inf,
+	}
+
+	service { 'rfiod':
+		enable => true,
+		ensure => running,
+		subscribe => File['rfio-sysconfig'],
+		require => [ Package['DPM-rfio-server'], File['rfio-sysconfig'], File['rfio-logdir'], File['rfio-logfile'] ],
+	}
+
+  }
+
+  class client {
+	package { 'dpm': ensure => latest }
   }
 
   class headnode {
@@ -131,6 +390,7 @@ class dpm {
 			environment => "DPNS_HOST=$dpm_ns_host",
 			command => "dpns-mkdir -p /dpm/$name",
 			unless => "dpns-ls /dpm/$name",
+			require => Package['dpm'],
 		}
   	}
 
@@ -141,6 +401,7 @@ class dpm {
 			environment => "DPNS_HOST=$dpm_ns_host",
 			command => "dpns-mkdir -p $vo_path; dpns-chmod 755 $vo_path; dpns-entergrpmap --group $name; dpns-chown root:$name $vo_path; dpns-setacl -m d:u::7,d:g::7,d:o:5 $vo_path",
 			unless => "dpns-ls /dpm/$domain/home/$name",
+			require => Package['dpm'],
 		}
 	}
 
@@ -150,6 +411,7 @@ class dpm {
 			environment => "DPM_HOST=$dpm_host",
 			command => "dpm-addpool --poolname $name",
 			unless => "dpm-qryconf | grep 'POOL $name '",
+			require => Package['dpm'],
 		}
 	}
   }
@@ -182,260 +444,10 @@ class dpm {
 			environment => "DPM_HOST=$dpm_host",
 			command => "dpm-addfs --poolname $pool --server $fqdn --fs $name",
 			unless => "dpm-qryconf | grep '  $fqdn $name '",
+			require => Package['dpm'],
 		}
 	}
   }
 
-  class dpm inherits base {
-  	include glite
-	include mysql::server
-
-	package { ['DPM-server-mysql']:
-			ensure=> latest,
-	}
-
-	service { 'dpm':
-		enable => true,
-		ensure => running,
-		subscribe => File['dpm-config', 'dpm-sysconfig'],
-		require => Package['DPM-server-mysql'],
-	}
-
-	file { 'dpm-config':
-		path => $operatingsytem ? {
-			default => $dpm_configfile,
-		},
-		owner => dpmmgr,
-		group => dpmmgr,
-		mode  => 600,
-		content => template("dpm/dpm-config.erb"),
-		recurse => inf,
-	}
-
-	file { 'dpm-sysconfig':
-		name => $operatingsystem ? {
-			default => '/etc/sysconfig/dpm',
-		},
-		owner => root,
-		group => root,
-		mode  => 644,
-		content => template("dpm/dpm-sysconfig.erb"),
-	}
-
-	file { 'dpm-logfile':
-		name => $operatingsystem ? {
-			default => $dpm_logfile,
-		},
-		ensure => present,
-		owner => dpmmgr,
-		group => dpmmgr,
-		mode  => 644,
-	}
-
-	mysql::server::grant { "dpm_db_$dpm_dbuser":
-		user => $dpm_dbuser,
-		password => $dpm_dbpass,
-		db => "dpm_db",
-		require => Mysql::Server::Db['dpm_db'],
-	}
-
-	mysql::server::db { 'dpm_db':
-		source => '/opt/lcg/share/DPM/create_dpm_tables_mysql.sql',
-	}
-  }
-
-  class nameserver inherits base {
-  	include glite
-	include mysql::server
-
-	package { ['DPM-name-server-mysql']:
-			ensure=> latest,
-	}
-
-	service { 'dpns':
-		enable => true,
-		ensure => running,
-		name => 'dpnsdaemon',
-		subscribe => File['dpns-config', 'dpns-sysconfig'],
-		require => Package['DPM-name-server-mysql'],
-	}
-
-	file { 'dpns-config':
-		name => $operatingsytem ? {
-			default => $dpm_ns_configfile,
-		},
-		owner => dpmmgr,
-		group => dpmmgr,
-		mode  => 600,
-		content => template("dpm/dpns-config.erb"),
-		recurse => inf,
-	}
-
-	file { 'dpns-sysconfig':
-		name => $operatingsystem ? {
-			default => '/etc/sysconfig/dpnsdaemon',
-		},
-		owner => root,
-		group => root,
-		mode  => 644,
-		content => template("dpm/dpns-sysconfig.erb"),
-	}
-
-	file { 'dpns-logfile':
-		name => $operatingsystem ? {
-			default => $dpm_ns_logfile,
-		},
-		ensure => present,
-		owner => dpmmgr,
-		group => dpmmgr,
-		mode  => 644,
-	}
-
-	mysql::server::grant { "cns_db_$dpm_ns_dbuser":
-		user => $dpm_ns_dbuser,
-		password => $dpm_ns_dbpass,
-		db => "cns_db",
-		require => Mysql::Server::Db['cns_db'],
-	}
-
-	mysql::server::db { 'cns_db':
-		source => '/opt/lcg/share/DPM/create_dpns_tables_mysql.sql',
-	}
-  }
-		
-
-  class srm inherits base {
-  	include glite
-
-	package { ['DPM-srm-server-mysql']:
-			ensure=> latest,
-	}
-
-	service { 'srm':
-		enable => true,
-		ensure => running,
-		name => 'srmv2.2',
-		subscribe => File['srm-sysconfig'],
-		require => Package['DPM-srm-server-mysql'],
-	}
-
-	file { 'srm-sysconfig':
-		name => $operatingsystem ? {
-			default => '/etc/sysconfig/srmv2.2',
-		},
-		owner => root,
-		group => root,
-		mode  => 644,
-		content => template("dpm/srm-sysconfig.erb"),
-	}
-
-	file { 'srm-logdir': # required to fix missing dir in the srmv2.2 rpm
-		name => '/var/log/srmv2.2',
-		owner => dpmmgr,
-		group => dpmmgr,
-		mode => 644,
-		ensure => directory,
-	}
-
-	file { 'srm-logfile':
-		name => $operatingsystem ? {
-			default => $dpm_srm_logfile,
-		},
-		ensure => present,
-		owner => dpmmgr,
-		group => dpmmgr,
-		mode  => 644,
-	}
-  }
-
-  class gridftp inherits base {
-  	include glite
-
-	package { ['DPM-DSI', 'vdt_globus_data_server', 'dpm-devel']: # dpm-devel only need due to missing dep in DPM-DSI
-			ensure=> latest,
-	}
-
-	service { 'dpm-gsiftp':
-		enable => true,
-		ensure => running,
-		subscribe => File['dpm-gsiftp-sysconfig'],
-		require => Package['DPM-DSI'],
-	}
-
-	file { 'dpm-gsiftp-sysconfig':
-		name => $operatingsystem ? {
-			default => '/etc/sysconfig/dpm-gsiftp',
-		},
-		owner => root,
-		group => root,
-		mode  => 644,
-		content => template("dpm/dpm-gsiftp-sysconfig.erb"),
-	}
-
-	file { 'dpm-gsiftp-logdir': # required to fix missing dir in the rfio rpm
-		name => '/var/log/dpm-gsiftp',
-		owner => root,
-		group => root,
-		mode => 644,
-		ensure => directory,
-	}
-
-	file { 'dpm-gsiftp-logfile':
-		name => $operatingsystem ? {
-			default => $dpm_gsiftp_logfile,
-		},
-		ensure => present,
-		owner => root,
-		group => root,
-		mode  => 666,
-	}
-  }
-
-  class rfio inherits base {
-  	include glite
-
-	package { ['DPM-rfio-server']:
-			ensure=> latest,
-	}
-
-	service { 'rfiod':
-		enable => true,
-		ensure => running,
-		subscribe => File['rfio-sysconfig'],
-		require => Package['DPM-rfio-server'],
-	}
-
-	file { 'rfio-sysconfig':
-		name => $operatingsystem ? {
-			default => '/etc/sysconfig/rfiod',
-		},
-		owner => root,
-		group => root,
-		mode  => 644,
-		content => template("dpm/rfio-sysconfig.erb"),
-	}
-
-	file { 'rfio-logdir': # required to fix missing dir in the rfio rpm
-		name => '/var/log/rfio',
-		owner => root,
-		group => root,
-		mode => 644,
-		ensure => directory,
-	}
-
-	file { 'rfio-logfile':
-		name => $operatingsystem ? {
-			default => $dpm_rfio_logfile,
-		},
-		ensure => present,
-		owner => dpmmgr,
-		group => dpmmgr,
-		mode  => 666,
-	}
-  }
-
-  class client {
-	package { 'dpm': ensure => latest }
-  }
 
 }
