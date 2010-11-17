@@ -78,7 +78,7 @@ class dpm {
             ensure => present,
         }
 
-	    user { "dpmmgr": 
+        user { "dpmmgr": 
             comment => "dpm manager", 
             uid     => 151, 
             gid     => "dpmmgr", 
