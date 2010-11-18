@@ -74,12 +74,12 @@ $disk_nodes = ['vmdm0008.cern.ch']
 # Node definition
 #
 node default {
-	include dms::unstable
-	include voms::atlas
-	include voms::dteam
+    include dms::unstable
+    include voms::atlas
+    include voms::dteam
+    include glite::gridmap
 
     Package { require => Yumrepo["dpm-mysql-unstable-etics", "epel"] }
-
 }
 
 node 'vmdm0001.cern.ch' inherits default {

@@ -36,16 +36,7 @@ class glite {
         refreshonly => true,
     }
 
-    class gridmap {
-        glite::mkgridmap { "edg-mkgridmap":
-            conffile => "/opt/edg/etc/edg-mkgridmap.conf",
-            mapfile  => "/etc/grid-security/grid-mapfile",
-            logfile  => "/var/log/edg-mkgridmap.log",
-            groups   => ["vomss://voms.cern.ch:8443/voms/dteam?/dteam .dteam", "vomss://voms.cern.ch:8443/voms/dteam?/atlas .atlas"],
-        }
-    }
-
-    define mkgridmap($conffile, $mapfile, $logfile, $groups) {
+    define mkgridmap($conffile, $mapfile, $logfile) {
         
         file { "$name-conf":
             path    => $conffile,
@@ -53,6 +44,8 @@ class glite {
             group   => root,
             mode    => 644,
             content => template("glite/mkgridmap.conf"),
+            tag     => "gridmap",
+            ensure  => present,
         }
 
         cron { "$name-cron":
@@ -68,4 +61,13 @@ class glite {
         }
 
     }
+
+    class gridmap {
+        glite::mkgridmap { "edg-mkgridmap":
+            conffile => "/opt/edg/etc/edg-mkgridmap.conf",
+            mapfile  => "/etc/grid-security/grid-mapfile",
+            logfile  => "/var/log/edg-mkgridmap.log",
+        }
+    }
+
 }

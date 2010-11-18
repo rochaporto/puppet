@@ -68,8 +68,17 @@ import "mysql"
 #
 class dpm {
 
+    class lcgdmmap {
+        glite::mkgridmap { "lcgdm-mkgridmap":
+            conffile => "/opt/lcg/etc/lcgdm-mkgridmap.conf",
+            mapfile  => "/opt/lcg/etc/lcgdm-mapfile",
+            logfile  => "/var/log/lcgdm-mkgridmap.log",
+        }
+    }
+
     class base {
         include glite
+	include dpm::lcgdmmap
         
         package { 
             "vdt_globus_essentials": 
@@ -135,13 +144,6 @@ class dpm {
                 require => [
                     File["/opt/lcg/etc"], User["dpmmgr"]
                 ];
-        }
-
-        glite::mkgridmap { "lcgdm-mkgridmap":
-            conffile => "/opt/lcg/etc/lcgdm-mkgridmap.conf",
-            mapfile  => "/opt/lcg/etc/lcgdm-mapfile",
-            logfile  => "/var/log/lcgdm-mkgridmap.log",
-            groups   => ["vomss://voms.cern.ch:8443/voms/dteam?/dteam .dteam", "vomss://voms.cern.ch:8443/voms/dteam?/atlas .atlas"],
         }
 
     }
