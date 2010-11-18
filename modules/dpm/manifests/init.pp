@@ -1,8 +1,8 @@
 #
 # dpm/init.pp
 #
-import 'glite'
-import 'mysql'
+import "glite"
+import "mysql"
 
 #
 # Class: dpm
@@ -71,7 +71,11 @@ class dpm {
     class base {
         include glite
         
-        package { ["vdt_globus_essentials"]: ensure => latest }
+        package { 
+            "vdt_globus_essentials": 
+                ensure => latest, 
+                notify => Exec["glite_ldconfig"]
+        }
 
         group { "dpmmgr":
             gid    => 151, 
@@ -91,34 +95,61 @@ class dpm {
                 owner  => dpmmgr,
                 group  => dpmmgr,
                 mode   => 755,
-                ensure => directory;
+                ensure => directory,
+                require => User["dpmmgr"];
             "/etc/grid-security/dpmmgr/dpmcert.pem":
                 owner   => dpmmgr,
                 group   => dpmmgr,
                 mode    => 644,
                 source  => "/etc/grid-security/hostcert.pem",
-                require => File["/etc/grid-security/dpmmgr"];
+                require => [ 
+                    File["/etc/grid-security/dpmmgr"], User["dpmmgr"] 
+                ];
             "/etc/grid-security/dpmmgr/dpmkey.pem":
                 owner   => dpmmgr,
                 group   => dpmmgr,
                 mode    => 400,
                 source  => "/etc/grid-security/hostkey.pem",
-                require => File["/etc/grid-security/dpmmgr"];
+                require => [ 
+                    File["/etc/grid-security/dpmmgr"], User["dpmmgr"] 
+                ];
+            "/opt":
+                owner   => root,
+                group   => root,
+                ensure  => directory;
+            "/opt/lcg":
+                owner   => root,
+                group   => root,
+                ensure  => directory,
+                require => File["/opt"];
+            "/opt/lcg/etc":
+                owner   => root,
+                group   => root,
+                ensure  => directory,
+                require => File["/opt/lcg"];
             "/opt/lcg/etc/lcgdm-mapfile":
                 owner   => dpmmgr,
                 group   => dpmmgr,
                 mode    => 600,
                 ensure  => present,
-                recurse => true;
+                require => [
+                    File["/opt/lcg/etc"], User["dpmmgr"]
+                ];
         }
+
+        glite::mkgridmap { "lcgdm-mkgridmap":
+            conffile => "/opt/lcg/etc/lcgdm-mkgridmap.conf",
+            mapfile  => "/opt/lcg/etc/lcgdm-mapfile",
+            logfile  => "/var/log/lcgdm-mkgridmap.log",
+            groups   => ["vomss://voms.cern.ch:8443/voms/dteam?/dteam .dteam", "vomss://voms.cern.ch:8443/voms/dteam?/atlas .atlas"],
+        }
+
     }
 
     class dpm inherits base {
-        include glite
-        include mysql
         include mysql::server
 
-        package { ["DPM-server-mysql"]:	ensure=> latest, }
+        package { ["DPM-server-mysql"]:	ensure=> latest, notify => Exec["glite_ldconfig"], }
 
         file {
             "dpm-config":
@@ -163,6 +194,7 @@ class dpm {
         service { "dpm":
             enable    => true,
             ensure    => running,
+            hasrestart => true,
             subscribe => File["dpm-config", "dpm-sysconfig"],
             require   => [ 
                 Package["DPM-server-mysql"], File["dpm-config"], File["dpm-sysconfig"], 
@@ -173,11 +205,9 @@ class dpm {
     }
 
     class nameserver inherits base {
-        include glite
-        include mysql
         include mysql::server
 
-        package { ["DPM-name-server-mysql"]: ensure=> latest, }
+        package { ["DPM-name-server-mysql"]: ensure=> latest, notify => Exec["glite_ldconfig"], }
 
         file { 
             "dpns-config":
@@ -222,6 +252,7 @@ class dpm {
         service { "dpns":
             enable    => true,
             ensure    => running,
+            hasrestart => true,
             name      => "dpnsdaemon",
             subscribe => File["dpns-config", "dpns-sysconfig"],
             require   => [ 
@@ -234,9 +265,9 @@ class dpm {
 		
 
     class srm inherits base {
-        include glite
+        include mysql::server
 
-        package { ["DPM-srm-server-mysql"]: ensure=> latest, }
+        package { ["DPM-srm-server-mysql"]: ensure=> latest, notify => Exec["glite_ldconfig"], }
 
         file { 
             "srm-sysconfig":
@@ -268,6 +299,7 @@ class dpm {
             enable    => true,
             ensure    => running,
             name      => "srmv2.2",
+            hasrestart => true,
             subscribe => File["srm-sysconfig"],
             require   => [ 
                 Service["dpm"], Service["dpns"], Package["DPM-srm-server-mysql"], 
@@ -277,10 +309,11 @@ class dpm {
     }
 
     class gridftp inherits base {
-  	    include glite
-	
         # TODO: dpm-devel only need due to missing dep in DPM-DSI
-        package { ["DPM-DSI", "vdt_globus_data_server", "dpm-devel"]: ensure=> latest, }
+        package { ["DPM-DSI", "vdt_globus_data_server", "dpm-devel"]: 
+            ensure=> latest,
+            notify => Exec["glite_ldconfig"], 
+        }
 
         file { 
             "dpm-gsiftp-sysconfig":
@@ -311,18 +344,17 @@ class dpm {
         service { "dpm-gsiftp":
             enable    => true,
             ensure    => running,
+            hasrestart => true,
             subscribe => File["dpm-gsiftp-sysconfig"],
             require   => [ 
-                Package["DPM-DSI"], File["dpm-gsiftp-sysconfig"], File["dpm-gsiftp-logdir"], 
-                File["dpm-gsiftp-logfile"] 
+                Package["DPM-DSI"], Package["vdt_globus_data_server"], Package["dpm-devel"],
+                File["dpm-gsiftp-sysconfig"], File["dpm-gsiftp-logdir"], File["dpm-gsiftp-logfile"] 
             ],
         }
     }
 
     class rfio inherits base {
-        include glite
-
-        package { ["DPM-rfio-server"]: ensure=> latest, }
+        package { ["DPM-rfio-server"]: ensure=> latest, notify => Exec["glite_ldconfig"], }
 
         file { 
             "rfio-sysconfig":
@@ -353,15 +385,17 @@ class dpm {
         service { "rfiod":
             enable    => true,
             ensure    => running,
+            hasrestart => true,
             subscribe => File["rfio-sysconfig"],
-            require   => [ 
-                Package["DPM-rfio-server"], File["rfio-sysconfig"], File["rfio-logdir"], File["rfio-logfile"] 
+            require   => [
+                Package["DPM-rfio-server"], File["rfio-sysconfig"], File["rfio-logdir"], 
+                File["rfio-logfile"] 
             ],
         }
     }
 
     class client {
-        package { "dpm": ensure => latest }
+        package { "dpm": ensure => latest, notify => Exec["glite_ldconfig"], }
     }
 
     class headnode {
@@ -384,7 +418,7 @@ class dpm {
                 environment => "DPNS_HOST=$dpm_ns_host",
                 command     => "dpns-mkdir -p /dpm/$name",
                 unless      => "dpns-ls /dpm/$name",
-                require     => Package["dpm"],
+                require     => Service["dpns"],
             }
         }
 
@@ -395,7 +429,7 @@ class dpm {
                 environment => "DPNS_HOST=$dpm_ns_host",
                 command     => "dpns-mkdir -p $vo_path; dpns-chmod 755 $vo_path; dpns-entergrpmap --group $name; dpns-chown root:$name $vo_path; dpns-setacl -m d:u::7,d:g::7,d:o:5 $vo_path",
                 unless      => "dpns-ls /dpm/$domain/home/$name",
-                require     => Package["dpm"],
+                require     => Service["dpns"],
             }
         }
 
@@ -405,7 +439,7 @@ class dpm {
                 environment => "DPM_HOST=$dpm_host",
                 command     => "dpm-addpool --poolname $name",
                 unless      => "dpm-qryconf | grep 'POOL $name '",
-                require     => Package["dpm"],
+                require     => Service["dpm"],
             }
         }
     }
@@ -425,11 +459,46 @@ class dpm {
 
         define loopback($blocks, $bs="1M", $type="ext3") {
             $file = "$name-partition-file"
-            exec { "dpm_loopback_$fqdn-$name":
-                path    => "/usr/bin:/usr/sbin:/bin",
-                command => "mkdir -p $name; dd if=/dev/zero of=$file bs=$bs count=$blocks; mkfs.$type -F $file",
-                unless  => "ls -l $name",
+
+            file { "loopback_$fqdn-$name":
+                path => $name,
+                owner => dpmmgr,
+                group => dpmmgr,
+                mode => 770,
+                ensure => directory,
             }
+
+            file { "loopback_$fqdn-$file":
+                path => $file,
+                owner => dpmmgr,
+                group => dpmmgr,
+                mode => 770,
+            }
+
+            exec { 
+                "dpm_loop_dd_$fqdn-$name":
+                    path    => "/usr/bin:/usr/sbin:/bin:/sbin",
+                    command => "dd if=/dev/zero of=$file bs=$bs count=$blocks",
+                    creates  => $file;
+                "dpm_loop_mkfs_$fqdn-$name":
+                    path    => "/usr/bin:/usr/sbin:/bin:/sbin",
+                    command => "mkfs.$type -F $file",
+                    unless  => "df | grep $name",
+                    require => [
+                        Exec["dpm_loop_dd_$fqdn-$name"],
+                        File["loopback_$fqdn-$name"],
+                    ];
+                "dpm_loop_mount_$fqdn-$name":
+                    path    => "/usr/bin:/usr/sbin:/bin:/sbin",
+                    command => "mount -o loop $file $name; chmod 770 $name; chown dpmmgr.dpmmgr $name",
+                    unless  => "df | grep $name",
+                    require => [
+                        Exec["dpm_loop_mkfs_$fqdn-$name"],
+                        File["loopback_$fqdn-$name"],
+                        File["loopback_$fqdn-$file"],
+                    ];
+            }
+
         }
 
         define filesystem($pool) {
@@ -438,7 +507,7 @@ class dpm {
                 environment => "DPM_HOST=$dpm_host",
                 command     => "dpm-addfs --poolname $pool --server $fqdn --fs $name",
                 unless      => "dpm-qryconf | grep '  $fqdn $name '",
-                require     => Package["dpm"],
+                require     => Class["dpm::client"],
             }
         }
     }

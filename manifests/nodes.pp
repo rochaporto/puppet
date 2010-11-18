@@ -67,27 +67,22 @@ $dpm_ns_configfile = "/opt/lcg/etc/NSCONFIG"
 $dpm_ns_logfile = "/var/log/dpns/log" 
 $dpm_ns_numthreads = 20 
 
+# TODO: replace this with an exported resource, so that disk nodes simply publish themselves
 $disk_nodes = ['vmdm0008.cern.ch']
 
 #
 # Node definition
 #
 node default {
-#	include dms::unstable
+	include dms::unstable
 	include voms::atlas
 	include voms::dteam
-/*
-	yumrepo { 'dpm-mysql':
-		name => "dpm-mysql-unstable-etics",
-		descr => "DPM MySQL ETICS Unstable Repository",
-		baseurl => "http://etics-repository.cern.ch/repository/pm/volatile/repomd/name/lcgdm_unstable_sl5_x86_64_gcc412",
-		gpgcheck => 0,
-		enabled => 1,
-	}*/
+
+    Package { require => Yumrepo["dpm-mysql-unstable-etics", "epel"] }
+
 }
 
 node 'vmdm0001.cern.ch' inherits default {
-	include dpm
 	include dpm::headnode
 
 	# setup supported domain/vo(s)
@@ -100,9 +95,9 @@ node 'vmdm0008.cern.ch' inherits default {
 	include dpm::disknode
 
 	# setup filesystems (we use loopback partitions as this is a testing VM machine)
-	dpm::disknode::loopback { '/dpmfs/fs1': blocks => 15000, }
-	dpm::disknode::filesystem { '/dpmfs/fs1': pool => 'pool1', }
+	dpm::disknode::loopback { '/dpmfs1': blocks => 5000, }
+	dpm::disknode::filesystem { '/dpmfs1': pool => 'pool1', }
 
-	dpm::disknode::loopback { '/dpmfs/fs2': blocks => 15000, }
-	dpm::disknode::filesystem { '/dpmfs/fs2': pool => 'pool1', }
+	dpm::disknode::loopback { '/dpmfs2': blocks => 1000, }
+	dpm::disknode::filesystem { '/dpmfs2': pool => 'pool1', }
 }
