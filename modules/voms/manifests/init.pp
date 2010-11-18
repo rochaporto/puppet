@@ -51,13 +51,13 @@ class voms {
                 server => "voms.cern.ch",
                 port   => 15001,
                 dn     => ["/DC=ch/DC=cern/OU=computers/CN=voms.cern.ch"],
-                ca_dn  => ["/DC=ch/DC=cern/CN=CERN Trusted Certification Authority"],
-        "voms_atlas_lcg":
+                ca_dn  => ["/DC=ch/DC=cern/CN=CERN Trusted Certification Authority"];
+            "voms_atlas_lcg":
                 vo     => "atlas",
                 server => "lcg-voms.cern.ch",
                 port   => 15001,
                 dn     => ["/DC=ch/DC=cern/OU=computers/CN=lcg-voms.cern.ch"],
-                ca_dn  => ["/DC=ch/DC=cern/CN=CERN Trusted Certification Authority"],
+                ca_dn  => ["/DC=ch/DC=cern/CN=CERN Trusted Certification Authority"];
         }
     }
 
@@ -78,13 +78,13 @@ class voms {
                 server => "lcg-voms.cern.ch",
                 port   => 15001,
                 dn     => ["/DC=ch/DC=cern/OU=computers/CN=lcg-voms.cern.ch"],
-                ca_dn  => ["/DC=ch/DC=cern/CN=CERN Trusted Certification Authority"],
+                ca_dn  => ["/DC=ch/DC=cern/CN=CERN Trusted Certification Authority"];
             "voms_dteam_tbed":
                 vo     => "dteam",
                 server => "lxbra2309.cern.ch",
                 port   => 15004,
                 dn     => ["/DC=ch/DC=cern/OU=computers/CN=lxbra2309.cern.ch"],
-                ca_dn  => ["/DC=ch/DC=cern/CN=CERN Trusted Certification Authority"],
+                ca_dn  => ["/DC=ch/DC=cern/CN=CERN Trusted Certification Authority"];
         }
     }
 }

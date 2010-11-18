@@ -30,7 +30,7 @@ class glite {
     exec { "glite_ldconfig":
         path => "/usr/bin:/usr/sbin:/bin:/sbin",
         command => "ldconfig",
-        subscribe => [ File["glite_ldconf'], File['globus_ldconf"] ],
+        subscribe => [ File["glite_ldconf"], File["globus_ldconf"] ],
         refreshonly => true,
     }
 

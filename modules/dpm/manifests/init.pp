@@ -130,7 +130,7 @@ class dpm {
                 mode    => 600,
                 content => template("dpm/dpm-config.erb"),
                 require => Package["DPM-server-mysql"];
-            "dpm-sysconfig':
+            "dpm-sysconfig":
                 name    => $operatingsystem ? {
                     default => '/etc/sysconfig/dpm',
                 },
