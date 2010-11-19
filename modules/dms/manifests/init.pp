@@ -18,6 +18,8 @@ class dms {
 
         package { "yum-protectbase": }
 
+        package { "lcgdm-libs": require => Package["yum-protectbase"] }
+
         yumrepo { "dpm-mysql-unstable-etics":
             descr    => "DPM MySQL ETICS Unstable Repository",
             baseurl  => "http://etics-repository.cern.ch/repository/pm/volatile/repomd/name/lcgdm_unstable_sl5_x86_64_gcc412",
