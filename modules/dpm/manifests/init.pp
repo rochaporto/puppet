@@ -397,6 +397,8 @@ class dpm {
     }
 
     class client {
+        include glite
+
         package { "dpm": ensure => latest, notify => Exec["glite_ldconfig"], }
     }
 
