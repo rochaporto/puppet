@@ -90,7 +90,9 @@ node 'vmdm0008.cern.ch' inherits default {
     include dpm::client
 }
 
+#
 # DPM Head Node(s)
+#
 node 'vmdm0001.cern.ch' inherits service {
     include dpm::headnode
 
