@@ -15,7 +15,6 @@ $dpm_host = "vmdm0001.cern.ch"
 # DPM server configuration
 #
 $dpm_dbuser = 'dpmmgr'
-$dpm_dbpass = 'dpmmgr'
 $dpm_dbhost = 'localhost'
 $dpm_run = "yes"
 $dpm_ulimit = 4096
