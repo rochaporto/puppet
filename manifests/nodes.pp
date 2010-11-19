@@ -56,7 +56,6 @@ $dpm_gsiftp_options = "-S -d all -p 2811 -auth-level 0 -dsi dpm -disable-usage-s
 # Nameserver configuration
 #
 $dpm_ns_dbuser = 'dpmmgr'
-$dpm_ns_dbpass = 'dpmmgr'
 $dpm_ns_dbhost = 'localhost'
 
 $dpm_ns_run = "yes"
