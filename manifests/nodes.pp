@@ -68,36 +68,54 @@ $dpm_ns_logfile = "/var/log/dpns/log"
 $dpm_ns_numthreads = 20 
 
 # TODO: replace this with an exported resource, so that disk nodes simply publish themselves
-$disk_nodes = ['vmdm0008.cern.ch']
+$disk_nodes = ["vmdm0002.cern.ch vmdm0009.cern.ch"]
 
 #
-# Node definition
+# Generic node definitions
 #
 node default {
     include dms::unstable
-    include voms::atlas
-    include voms::dteam
     include glite::gridmap
 
     Package { require => Yumrepo["dpm-mysql-unstable-etics", "epel"] }
 }
 
-node 'vmdm0001.cern.ch' inherits default {
-	include dpm::headnode
-
-	# setup supported domain/vo(s)
-	dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
-	dpm::headnode::vo { 'dteam': domain => 'cern.ch', require => Dpm::Headnode::Domain['cern.ch'], }
-	dpm::headnode::pool { 'pool1': require => Service['dpm'] }
+node service inherits default {
+    include voms::atlas
+    include voms::dteam
 }
 
+#
+# Client node(s)
+#
 node 'vmdm0008.cern.ch' inherits default {
-	include dpm::disknode
-
-	# setup filesystems (we use loopback partitions as this is a testing VM machine)
-	dpm::disknode::loopback { '/dpmfs1': blocks => 5000, }
-	dpm::disknode::filesystem { '/dpmfs1': pool => 'pool1', }
-
-	dpm::disknode::loopback { '/dpmfs2': blocks => 1000, }
-	dpm::disknode::filesystem { '/dpmfs2': pool => 'pool1', }
+    include dpm::client
 }
+
+# DPM Head Node(s)
+node 'vmdm0001.cern.ch' inherits service {
+    include dpm::headnode
+
+    # setup supported domain/vo(s)
+    dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
+    dpm::headnode::vo { 'dteam': domain => 'cern.ch', require => Dpm::Headnode::Domain['cern.ch'], }
+
+    # setup pools
+    dpm::headnode::pool { 'pool1': require => Service['dpm'] }
+    dpm::headnode::pool { 'pool2': require => Service['dpm'] }
+}
+
+#
+# DPM Disk Node(s)
+#
+node 'vmdm0002.cern.ch', 'vmdm0009.cern.ch' inherits service {
+    include dpm::disknode
+
+    # setup filesystems (we use loopback partitions as this is a testing VM machine)
+    dpm::disknode::loopback { '/dpmfs1': blocks => 5000, }
+    dpm::disknode::filesystem { '/dpmfs1': pool => 'pool1', }
+
+    dpm::disknode::loopback { '/dpmfs2': blocks => 5000, }
+    dpm::disknode::filesystem { '/dpmfs2': pool => 'pool2', }
+}
+
