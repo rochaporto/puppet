@@ -1,4 +1,5 @@
 # nodes.pp
+import 'nodes.passwd'
 
 import 'cern'
 import 'dms'
@@ -44,7 +45,7 @@ $dpm_rfio_portrange = "20000 25000"
 $dpm_rfio_options = "-sl"
 
 #
-# RFIO server configuration
+# GSIFTP server configuration
 #
 $dpm_gsiftp_run = "yes"
 $dpm_gsiftp_logfile = "/var/log/dpm-gsiftp/dpm-gsiftp.log"
@@ -56,7 +57,6 @@ $dpm_gsiftp_options = "-S -d all -p 2811 -auth-level 0 -dsi dpm -disable-usage-s
 #
 $dpm_ns_dbuser = 'dpmmgr'
 $dpm_ns_dbhost = 'localhost'
-
 $dpm_ns_run = "yes"
 $dpm_ns_readonly = "no" 
 $dpm_ns_ulimit = 4096 
