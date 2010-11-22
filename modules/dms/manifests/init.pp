@@ -35,6 +35,14 @@ class dms {
             enabled  => 1,
             protect  => 0,
         }
+
+        yumrepo { "lcg-ca":
+            descr    => "LCG Certificate Authorities (CAs)",
+            baseurl  => "http://linuxsoft.cern.ch/LCG-CAs/current",
+            gpgcheck => 0,
+            enabled  => 1,
+        }
+
     }
 
 }
