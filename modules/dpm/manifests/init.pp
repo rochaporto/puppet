@@ -76,9 +76,24 @@ class dpm {
         }
     }
 
+    class shift {
+        define set($component, $type, $value) {
+            augeas{"shiftconf_$component-$type":
+                changes => [
+                    "rm /files/etc/shift.conf/*[name = '$component' and type = '$type']",
+                    "set /files/etc/shift.conf/01/name $component",
+                    "set /files/etc/shift.conf/01/type $type",
+                    "set /files/etc/shift.conf/01/value $value",
+                ],
+                onlyif => "get /files/etc/shift.conf/*[name = '$component' and type = '$type']/value != '$value'",
+                require => File["/usr/share/augeas/lenses/dist/shift.aug"],
+            }
+        }
+    }
+
     class base {
         include glite
-	include dpm::lcgdmmap
+        include dpm::lcgdmmap
         
         package { 
             "vdt_globus_essentials": 
@@ -144,8 +159,13 @@ class dpm {
                 require => [
                     File["/opt/lcg/etc"], User["dpmmgr"]
                 ];
+            "/usr/share/augeas/lenses/dist/shift.aug":
+                owner   => root,
+                group   => root,
+                mode    => 744,
+                ensure  => present,
+                content => template("dpm/shift.aug"),    
         }
-
     }
 
     class dpm inherits base {
@@ -408,13 +428,9 @@ class dpm {
         include srm
         include client
 
-        file { "headnode-shiftconf":
-            path    => "/etc/shift.conf",
-            owner   => root,
-            group   => root,
-            mode    => 644,
-            content => template("dpm/headnode-shift.erb"),
-        }
+        dpm::shift::set { "shift_dpns_trust": component => "DPNS", type => "TRUST", value => $disk_nodes, }
+        dpm::shift::set { "shift_dpm_trust": component => "DPM", type => "TRUST", value => $disk_nodes, }
+	dpm::shift::set { "shift_dpm_protos": component => "DPM", type => "PROTOCOLS", value => "rfio gsiftp", }
 
         define domain {
             exec { "dpm_domain_$dpm_ns_host-$name":
@@ -452,14 +468,6 @@ class dpm {
         include gridftp
         include rfio
         include client
-
-        file { "disknode-shiftconf":
-            path    => "/etc/shift.conf",
-            owner   => root,
-            group   => root,
-            mode    => 644,
-            content => template("dpm/disknode-shift.erb"),
-        }
 
         define loopback($blocks, $bs="1M", $type="ext3") {
             $file = "$name-partition-file"
