@@ -84,6 +84,8 @@ $disk_nodes = ["rocha-slc5.cern.ch"]
     include dpm::disknode
     include dpm::client
 
+    cern::base::afs::user { ["rocha"]: }
+
     # setup supported domain/vo(s)
     dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
     dpm::headnode::vo { 'dteam': domain => 'cern.ch', require => Dpm::Headnode::Domain['cern.ch'], }

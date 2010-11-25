@@ -81,6 +81,8 @@ node default {
 node service inherits default {
     include voms::atlas
     include voms::dteam
+ 
+    cern::base::afs::user { ["rocha"]: }
 }
 
 #

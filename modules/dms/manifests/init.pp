@@ -15,6 +15,8 @@ import "cern"
 class dms {
 
     class unstable inherits cern::slc5 {
+        include cern::slc5::repos
+        include cern::base::afs
 
         package { "yum-protectbase": }
 
