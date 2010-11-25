@@ -554,6 +554,18 @@ class dpm {
                     ];
             }
 
+            augeas { "loopback_augeas_$fqdn-$name":
+                changes => [
+                    "set /files/etc/fstab/01/spec $file",
+                    "set /files/etc/fstab/01/file $name",
+                    "set /files/etc/fstab/01/vfstype $type",
+                    "set /files/etc/fstab/01/opt loop",
+                    "set /files/etc/fstab/01/dump 0",
+                    "set /files/etc/fstab/01/passno 0",
+                ],
+                onlyif => "match /files/etc/fstab/*[file = '$name'] size == 0",
+                require => Exec["dpm_loop_mkfs_$fqdn-$name"],
+            }
         }
 
         define filesystem($pool) {
