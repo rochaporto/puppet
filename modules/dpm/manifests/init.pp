@@ -77,17 +77,57 @@ class dpm {
     }
 
     class shift {
-        define set($component, $type, $value) {
-            augeas{"shiftconf_$component-$type":
+        define entry($component, $type) {
+            augeas { "shiftentry_$component-$type":
                 changes => [
-                    "rm /files/etc/shift.conf/*[name = '$component' and type = '$type']",
                     "set /files/etc/shift.conf/01/name $component",
                     "set /files/etc/shift.conf/01/type $type",
-                    "set /files/etc/shift.conf/01/value $value",
+                    "set /files/etc/shift.conf/01/type $type",
                 ],
-                onlyif => "get /files/etc/shift.conf/*[name = '$component' and type = '$type']/value != '$value'",
+                onlyif => "match /files/etc/shift.conf/*[name='$component' and type='$type'] size == 0",
+            }
+        }
+
+        define value($component, $type, $value) {
+            augeas { "shiftvalue_$component-$type-$value":
+                changes => [
+                    "set /files/etc/shift.conf/*[name='$component' and type='$type']/value[0] $value",
+                ],
+                onlyif => "match /files/etc/shift.conf/*[name='$component' and type='$type' and value='$value'] size == 0",
                 require => File["/usr/share/augeas/lenses/dist/shift.aug"],
             }
+        }
+
+        define trust_entry($component, $all=false, $type="") {
+            if $all {
+                entry { 
+                    "entry_$component-TRUST": component => $component, type => "TRUST";
+                    "entry_$component-RTRUST": component => $component, type => "RTRUST";
+                    "entry_$component-WTRUST": component => $component, type => "WTRUST";
+                    "entry_$component-XTRUST": component => $component, type => "XTRUST";
+                    "entry_$component-FTRUST": component => $component, type => "FTRUST";
+                }
+            } else {
+                entry { "entry_$component-$type": component => $component, type => "$typeTRUST", }
+            }
+        }
+
+        define trust_value($component, $host, $all=false, $type="") {
+            if $all {
+                value { 
+                    "trust_$component-$host": component => $component, type => "TRUST", value => $host;
+                    "rtrust_$component-$host": component => $component, type => "RTRUST", value => $host;
+                    "wtrust_$component-$host": component => $component, type => "WTRUST", value => $host;
+                    "xtrust_$component-$host": component => $component, type => "XTRUST", value => $host;
+                    "ftrust_$component-$host": component => $component, type => "FTRUST", value => $host;
+                }
+            } else {
+                value { "trust_$component-$type": component => $component, type => "$typeTRUST", value => $host, }
+            }
+        }
+
+        define protocol($component, $proto) {
+            value { "protocol_$component-$proto": component => $component, type => "PROTOCOLS", value => $proto, }
         }
     }
 
@@ -428,10 +468,6 @@ class dpm {
         include srm
         include client
 
-        dpm::shift::set { "shift_dpns_trust": component => "DPNS", type => "TRUST", value => $disk_nodes, }
-        dpm::shift::set { "shift_dpm_trust": component => "DPM", type => "TRUST", value => $disk_nodes, }
-	dpm::shift::set { "shift_dpm_protos": component => "DPM", type => "PROTOCOLS", value => "rfio gsiftp", }
-
         define domain {
             exec { "dpm_domain_$dpm_ns_host-$name":
                 path        => "/usr/bin:/usr/sbin:/bin:/opt/lcg/bin",
@@ -468,6 +504,13 @@ class dpm {
         include gridftp
         include rfio
         include client
+
+        dpm::shift::trust_entry { "trustentry_rfiod_all": component => "RFIOD", all => true, }
+        dpm::shift::trust_value { 
+            "trustvalue_rfiod_$dpns_host": 
+                component => "RFIOD", host => $dpm_ns_host, all => true, 
+                require => Dpm::Shift::Trust_entry["trustentry_rfiod_all"];
+        }
 
         define loopback($blocks, $bs="1M", $type="ext3") {
             $file = "$name-partition-file"
