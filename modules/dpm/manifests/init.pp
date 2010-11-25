@@ -254,11 +254,11 @@ class dpm {
         }
 
         service { "dpm":
-            enable    => true,
-            ensure    => running,
+            enable     => true,
+            ensure     => running,
             hasrestart => true,
-            subscribe => File["dpm-config", "dpm-sysconfig"],
-            require   => [ 
+            subscribe  => File["dpm-config", "dpm-sysconfig"],
+            require    => [ 
                 Package["DPM-server-mysql"], File["dpm-config"], File["dpm-sysconfig"], 
                 File["dpm-logfile"], Mysql::Server::Grant["dpm_db_$dpm_dbuser"], Mysql::Server::Db["dpm_db"] 
             ],
@@ -312,12 +312,12 @@ class dpm {
         }
 
         service { "dpns":
-            enable    => true,
-            ensure    => running,
+            enable     => true,
+            ensure     => running,
             hasrestart => true,
-            name      => "dpnsdaemon",
-            subscribe => File["dpns-config", "dpns-sysconfig"],
-            require   => [ 
+            name       => "dpnsdaemon",
+            subscribe  => File["dpns-config", "dpns-sysconfig"],
+            require    => [ 
                 Package["DPM-name-server-mysql"], File["dpns-config"], File["dpns-sysconfig"], 
 			    File["dpns-logfile"], Mysql::Server::Grant["cns_db_$dpm_ns_dbuser"], 
                 Mysql::Server::Db["cns_db"] 
@@ -358,12 +358,12 @@ class dpm {
         }
 
         service { "srm":
-            enable    => true,
-            ensure    => running,
-            name      => "srmv2.2",
+            enable     => true,
+            ensure     => running,
+            name       => "srmv2.2",
             hasrestart => true,
-            subscribe => File["srm-sysconfig"],
-            require   => [ 
+            subscribe  => File["srm-sysconfig"],
+            require    => [ 
                 Service["dpm"], Service["dpns"], Package["DPM-srm-server-mysql"], 
                 File["srm-sysconfig"], File["srm-logdir"], File["srm-logfile"]
             ],
@@ -404,11 +404,11 @@ class dpm {
         }
 
         service { "dpm-gsiftp":
-            enable    => true,
-            ensure    => running,
+            enable     => true,
+            ensure     => running,
             hasrestart => true,
-            subscribe => File["dpm-gsiftp-sysconfig"],
-            require   => [ 
+            subscribe  => File["dpm-gsiftp-sysconfig"],
+            require    => [ 
                 Package["DPM-DSI"], Package["vdt_globus_data_server"], Package["dpm-devel"],
                 File["dpm-gsiftp-sysconfig"], File["dpm-gsiftp-logdir"], File["dpm-gsiftp-logfile"] 
             ],
@@ -445,11 +445,11 @@ class dpm {
         }
 
         service { "rfiod":
-            enable    => true,
-            ensure    => running,
+            enable     => true,
+            ensure     => running,
             hasrestart => true,
-            subscribe => File["rfio-sysconfig"],
-            require   => [
+            subscribe  => File["rfio-sysconfig"],
+            require    => [
                 Package["DPM-rfio-server"], File["rfio-sysconfig"], File["rfio-logdir"], 
                 File["rfio-logfile"] 
             ],
