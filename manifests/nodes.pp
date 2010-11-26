@@ -105,6 +105,19 @@ node 'vmdm0001.cern.ch' inherits service {
     # setup pools
     dpm::headnode::pool { 'pool1': require => Service['dpm'] }
     dpm::headnode::pool { 'pool2': require => Service['dpm'] }
+
+    dpm::shift::trust_entry { "tentry_dpns": component => "DPNS", }
+    dpm::shift::trust_entry { "tentry_dpm": component => "DPM", }
+    dpm::shift::trust_value { 
+	"tvalue_dpns_0002":
+            component => "DPNS", host => "vmdm0002.cern.ch", require => Dpm::Shift::Trust_entry["tentry_dpns"];
+	"tvalue_dpm_0002":
+            component => "DPM", host => "vmdm0002.cern.ch", require => Dpm::Shift::Trust_entry["tentry_dpm"];
+	"tvalue_dpns_0009":
+            component => "DPNS", host => "vmdm0009.cern.ch", require => Dpm::Shift::Trust_entry["tentry_dpns"];
+	"tvalue_dpm_0009":
+            component => "DPM", host => "vmdm0009.cern.ch", require => Dpm::Shift::Trust_entry["tentry_dpm"];
+    }
 }
 
 #
