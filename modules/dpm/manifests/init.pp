@@ -98,31 +98,31 @@ class dpm {
             }
         }
 
-        define trust_entry($component, $all=false, $type="") {
+        define trust_entry($component, $all=false, $type='TRUST') {
             if $all {
                 entry { 
-                    "entry_$component-TRUST": component => $component, type => "TRUST";
-                    "entry_$component-RTRUST": component => $component, type => "RTRUST";
-                    "entry_$component-WTRUST": component => $component, type => "WTRUST";
-                    "entry_$component-XTRUST": component => $component, type => "XTRUST";
-                    "entry_$component-FTRUST": component => $component, type => "FTRUST";
+                    "entryt_$component": component => $component, type => "TRUST";
+                    "entrytr_$component": component => $component, type => "RTRUST";
+                    "entrytw_$component": component => $component, type => "WTRUST";
+                    "entrytx_$component": component => $component, type => "XTRUST";
+                    "entrytf_$component": component => $component, type => "FTRUST";
                 }
             } else {
-                entry { "entry_$component-$type": component => $component, type => "$typeTRUST", }
+                entry { "tentry_$component": component => $component, type => $type, }
             }
         }
 
-        define trust_value($component, $host, $all=false, $type="") {
+        define trust_value($component, $host, $all=false, $type='TRUST') {
             if $all {
                 value { 
-                    "trust_$component-$host": component => $component, type => "TRUST", value => $host;
-                    "rtrust_$component-$host": component => $component, type => "RTRUST", value => $host;
-                    "wtrust_$component-$host": component => $component, type => "WTRUST", value => $host;
-                    "xtrust_$component-$host": component => $component, type => "XTRUST", value => $host;
-                    "ftrust_$component-$host": component => $component, type => "FTRUST", value => $host;
+                    "valuet_$component-$host": component => $component, type => "TRUST", value => $host;
+                    "valuetr_$component-$host": component => $component, type => "RTRUST", value => $host;
+                    "valuetw_$component-$host": component => $component, type => "WTRUST", value => $host;
+                    "valuetx_$component-$host": component => $component, type => "XTRUST", value => $host;
+                    "valuetf_$component-$host": component => $component, type => "FTRUST", value => $host;
                 }
             } else {
-                value { "trust_$component-$type": component => $component, type => "$typeTRUST", value => $host, }
+                value { "trust_$component-$host-$type": component => $component, type => $type, value => $host, }
             }
         }
 
