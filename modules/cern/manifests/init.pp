@@ -49,9 +49,48 @@ class cern {
                 exec { "afsuser_$name":
                     path    => "/usr/bin:/usr/sbin:/bin:/sbin",
                     command => "useraddcern $name",
-                    unless  => "grep rocha /etc/passwd",
+                    unless  => "grep $name /etc/passwd",
                     require => Package["useraddcern"],
                 }
+            }
+        }
+
+        class hostcert {
+            package { 
+                "host-certificate-manager":
+                    source => "http://swrepsrv.cern.ch/swrep/x86_64_slc5/host-certificate-manager-2.8-0.noarch.rpm",
+                    provider => "rpm";
+                "SINDES-tools":
+                    source => "http://swrepsrv.cern.ch/swrep/x86_64_slc5/SINDES-tools-0.5-3.noarch.rpm",
+                    provider => "rpm";
+            }
+
+            file {
+                "/etc/grid-security":
+                    mode => 755;
+                "/etc/grid-security/hostcert.pem":
+                    mode => 644,
+                    require => [ File["/etc/grid-security"], Exec["hostcert_putcert"] ];
+                "/etc/grid-security/hostkey.pem":
+                    mode => 400,
+                    require => [ Exec["hostcert_putcert"] ];
+            }
+
+            exec { 
+                "hostcert_tmpclean":
+                    path    => "/usr/bin:/usr/sbin:/bin:/sbin",
+                    command => "rm -f /tmp/*/\$HOSTNAME/*host*pem";
+                "hostcert_get":
+                    path        => "/usr/bin:/usr/sbin:/bin:/sbin",
+                    environment => "HCMPASS=$cern_hcm_pass",
+                    command     => "echo \$HCMPASS | host-certificate-manager --username gdadmin --nosindes `hostname -s`",
+                    require => Package["host-certificate-manager"];
+                "hostcert_putcert":
+                    path    => "/usr/bin:/usr/sbin:/bin:/sbin",
+                    command => "cp /tmp/*/\$HOSTNAME/host*.pem /etc/grid-security",
+                    creates => ["/etc/grid-security/hostcert.pem", "/etc/grid-security/hostkey.pem"],
+                    require => [ File["/etc/grid-security"], Exec["hostcert_get"] ],
+                    notify  => Exec["hostcert_tmpclean"];
             }
         }
     }

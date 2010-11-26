@@ -74,6 +74,7 @@ $disk_nodes = ["vmdm0002.cern.ch vmdm0009.cern.ch"]
 node default {
     include dms::unstable
     include glite::gridmap
+    include cern::base::hostcert
 
     Package { require => Yumrepo["dpm-mysql-unstable-etics", "epel"] }
 }
