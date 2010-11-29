@@ -79,12 +79,14 @@ class cern {
             exec { 
                 "hostcert_tmpclean":
                     path    => "/usr/bin:/usr/sbin:/bin:/sbin",
-                    command => "rm -f /tmp/*/\$HOSTNAME/*host*pem";
+                    command => "rm -f /tmp/*/\$HOSTNAME/*host*pem",
+                    refreshonly => true;
                 "hostcert_get":
                     path        => "/usr/bin:/usr/sbin:/bin:/sbin",
                     environment => "HCMPASS=$cern_hcm_pass",
                     command     => "echo \$HCMPASS | host-certificate-manager --username gdadmin --nosindes `hostname -s`",
-                    require => Package["host-certificate-manager"];
+                    require     => Package["host-certificate-manager"],
+                    refreshonly => true;
                 "hostcert_putcert":
                     path    => "/usr/bin:/usr/sbin:/bin:/sbin",
                     command => "cp /tmp/*/\$HOSTNAME/host*.pem /etc/grid-security",
