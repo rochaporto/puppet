@@ -3,11 +3,10 @@
 import "cern"
 import "dms"
 import "dpm"
+import "lcgutil"
 import "voms"
-#
-# Client node(s)
-#
-node "rocha-slc5.cern.ch" {
+
+node "rocha-slc5.dyndns.cern.ch" {
 
     #
     # Cluster configuration (global values)
@@ -72,17 +71,15 @@ node "rocha-slc5.cern.ch" {
     # TODO: replace this with an exported resource, so that disk nodes simply publish themselves
     $disk_nodes = ["rocha-slc5.cern.ch"]
 
-
-    Package { require => Yumrepo["dpm-mysql-unstable-etics", "epel"] }
+    Package { require => Yumrepo["dpm-mysql-unstable-etics", "epel", "glite-global-etics"] }
     include dms::unstable
-    include glite
-    include glite::gridmap
-
-    include voms::dteam
-
     include dpm::headnode
     include dpm::disknode
     include dpm::client
+    include glite::gridmap
+    include lcgutil::client
+    include dpm::client
+    include dpm::dteam
 
     # setup supported domain/vo(s)
     dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }

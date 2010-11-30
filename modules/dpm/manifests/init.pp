@@ -579,4 +579,29 @@ class dpm {
         }
     }
 
+    class atlas inherits voms::atlas {
+        include dpm::lcgdmmap
+
+        voms::base::group { "dpm_atlas_cern":
+            file     => "/opt/lcg/etc/lcgdm-mkgridmap.conf",
+            voms_uri => "vomss://voms.cern.ch:8443/voms/atlas?/atlas",
+            vo       => "atlas",
+        }
+    }
+
+    class dteam inherits voms::dteam {
+        include dpm::lcgdmmap
+
+        voms::base::group { 
+            "dpm_dteam_cern":
+                file     => "/opt/lcg/etc/lcgdm-mkgridmap.conf",
+                voms_uri => "vomss://voms.cern.ch:8443/voms/dteam?/dteam",
+                vo       => "dteam";
+            "dpm_dteam_tbed":
+                file     => "/opt/lcg/etc/lcgdm-mkgridmap.conf",
+                voms_uri => "vomss://lxbra2309.cern.ch:8443/voms/dteam?/dteam",
+                vo       => "dteam";
+        }
+    }
+
 }

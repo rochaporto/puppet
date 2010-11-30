@@ -27,6 +27,18 @@ class glite {
             group => root,
             mode => 644,
             content => "/opt/globus/lib";
+        "glite_etc":
+            path   => "/opt/glite/etc",
+            owner  => root,
+            group  => root,
+            mode   => 755,
+            ensure => directory;
+        "/usr/share/augeas/lenses/dist/mkgridmap.aug":
+            owner   => root,
+            group   => root,
+            mode    => 755,
+            ensure  => present,
+            content => template("glite/mkgridmap.aug");
     }
 
     exec { "glite_ldconfig":
@@ -43,7 +55,6 @@ class glite {
             owner   => root,
             group   => root,
             mode    => 644,
-            content => template("glite/mkgridmap.conf"),
             tag     => "gridmap",
             ensure  => present,
         }
