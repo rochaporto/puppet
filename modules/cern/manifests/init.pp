@@ -59,7 +59,8 @@ class cern {
             package { 
                 "host-certificate-manager":
                     source => "http://swrepsrv.cern.ch/swrep/x86_64_slc5/host-certificate-manager-2.8-0.noarch.rpm",
-                    provider => "rpm";
+                    provider => "rpm",
+                    require  => Package["SINDES-tools"];
                 "SINDES-tools":
                     source => "http://swrepsrv.cern.ch/swrep/x86_64_slc5/SINDES-tools-0.5-3.noarch.rpm",
                     provider => "rpm";
@@ -135,6 +136,11 @@ class cern {
                     gpgkey   => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-sl\n\tfile:///etc/pki/rpm-gpg/RPM-GPG-KEY-sl5\n\tfile:///etc/pki/rpm-gpg/RPM-GPG-KEY-csieh\n\tfile:///etc/pki/rpm-gpg/RPM-GPG-KEY-dawson\n\tfile:///etc/pki/rpm-gpg/RPM-GPG-KEY-jpolok\n\tfile:///etc/pki/rpm-gpg/RPM-GPG-KEY-cern\n\tfile:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5",
                     gpgcheck => 1,
                     enabled  => 1;
+                "swrep":
+                    descr    => "CERN SWrep",
+                    baseurl  => "http://swrepsrv.cern.ch/yum/CERN_CC/x86_64_slc5/",
+                    gpgcheck => 0,
+                    enabled  => 0;
             }
         }
     }
