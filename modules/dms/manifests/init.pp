@@ -16,7 +16,6 @@ class dms {
 
     class unstable inherits cern::slc5 {
         include cern::slc5::repos
-        include cern::base::afs
 
         package { "yum-protectbase": }
 
@@ -28,6 +27,14 @@ class dms {
             gpgcheck => 0,
             enabled  => 1,
             protect  => 1,
+        }
+
+        yumrepo { "glite-global-etics":
+            descr    => "ETICS Global gLite Registered Repository",
+            baseurl  => "http://etics-repository.cern.ch/repository/pm/registered/repomd/global/org.glite/sl5_x86_64_gcc412",
+            gpgcheck => 0,
+            enabled  => 1,
+            protect  => 0,
         }
 
         yumrepo { "epel":
