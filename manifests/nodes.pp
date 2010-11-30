@@ -75,6 +75,7 @@ node default {
     include dms::unstable
     include glite::gridmap
     include cern::base::hostcert
+    include cern::base::afs
 
     Package { require => Yumrepo["dpm-mysql-unstable-etics", "epel"] }
 }
