@@ -160,14 +160,16 @@ class dpm {
                 group  => dpmmgr,
                 mode   => 755,
                 ensure => directory,
-                require => User["dpmmgr"];
+                require => [
+                    File["/etc/grid-security"], User["dpmmgr"],
+                ];
             "/etc/grid-security/dpmmgr/dpmcert.pem":
                 owner   => dpmmgr,
                 group   => dpmmgr,
                 mode    => 644,
                 source  => "/etc/grid-security/hostcert.pem",
                 require => [ 
-                    File["/etc/grid-security/dpmmgr"], User["dpmmgr"] 
+                    File["/etc/grid-security/hostcert.pem"], File["/etc/grid-security/dpmmgr"], User["dpmmgr"] 
                 ];
             "/etc/grid-security/dpmmgr/dpmkey.pem":
                 owner   => dpmmgr,
@@ -175,7 +177,7 @@ class dpm {
                 mode    => 400,
                 source  => "/etc/grid-security/hostkey.pem",
                 require => [ 
-                    File["/etc/grid-security/dpmmgr"], User["dpmmgr"] 
+                    File["/etc/grid-security/hostkey.pem"], File["/etc/grid-security/dpmmgr"], User["dpmmgr"] 
                 ];
             "/opt":
                 owner   => root,
@@ -208,10 +210,14 @@ class dpm {
         }
     }
 
-    class dpm inherits base {
+    class dpmserver inherits base {
         include mysql::server
 
-        package { ["DPM-server-mysql"]:	ensure=> latest, notify => Exec["glite_ldconfig"], }
+        package { "DPM-server-mysql":
+            ensure  => latest, 
+            notify  => Exec["glite_ldconfig"],
+            require => Package["lcg-CA"],
+        }
 
         file {
             "dpm-config":
@@ -260,7 +266,8 @@ class dpm {
             subscribe  => File["dpm-config", "dpm-sysconfig"],
             require    => [ 
                 Package["DPM-server-mysql"], File["dpm-config"], File["dpm-sysconfig"], 
-                File["dpm-logfile"], Mysql::Server::Grant["dpm_db_$dpm_dbuser"], Mysql::Server::Db["dpm_db"] 
+                File["dpm-logfile"], Mysql::Server::Grant["dpm_db_$dpm_dbuser"], Mysql::Server::Db["dpm_db"],
+                File["/etc/grid-security/dpmmgr/dpmcert.pem"],
             ],
         }
 
@@ -269,7 +276,11 @@ class dpm {
     class nameserver inherits base {
         include mysql::server
 
-        package { ["DPM-name-server-mysql"]: ensure=> latest, notify => Exec["glite_ldconfig"], }
+        package { "DPM-name-server-mysql":
+            ensure  => latest, 
+            notify  => Exec["glite_ldconfig"], 
+            require => Package["lcg-CA"],
+        }
 
         file { 
             "dpns-config":
@@ -320,7 +331,8 @@ class dpm {
             require    => [ 
                 Package["DPM-name-server-mysql"], File["dpns-config"], File["dpns-sysconfig"], 
 			    File["dpns-logfile"], Mysql::Server::Grant["cns_db_$dpm_ns_dbuser"], 
-                Mysql::Server::Db["cns_db"] 
+                Mysql::Server::Db["cns_db"], File["/etc/grid-security/dpmmgr/dpmcert.pem"],
+                File["/etc/grid-security/dpmmgr/dpmcert.pem"], 
             ],
         }
     }
@@ -464,17 +476,33 @@ class dpm {
 
     class headnode {
         include nameserver
-        include dpm
+        include dpmserver
         include srm
         include client
+
+        dpm::shift::trust_entry { "trustentry_dpns": component => "DPNS", }
+        dpm::shift::trust_value {
+            "trustvalue_dpns_$dpns_host": 
+                component => "DPNS", host => $dpm_ns_host,
+                require => Dpm::Shift::Trust_entry["trustentry_dpns"];
+        }
+
+        dpm::shift::trust_entry { "trustentry_dpm": component => "DPM", }
+        dpm::shift::trust_value {
+            "trustvalue_dpm_$dpm_host": 
+                component => "DPM", host => $dpm_ns_host,
+                require => Dpm::Shift::Trust_entry["trustentry_dpm"];
+        }
 
         define domain {
             exec { "dpm_domain_$dpm_ns_host-$name":
                 path        => "/usr/bin:/usr/sbin:/bin:/opt/lcg/bin",
-                environment => "DPNS_HOST=$dpm_ns_host",
+                environment => [
+                    "DPNS_HOST=$dpm_ns_host", "DPNS_CONNTIMEOUT=5", "DPNS_CONRETRY=2", "DPNS_CONRETRYINT=1"
+                ],
                 command     => "dpns-mkdir -p /dpm/$name",
                 unless      => "dpns-ls /dpm/$name",
-                require     => Service["dpns"],
+                require     => [ Class["dpm::client"], Service["dpns"], ],
             }
         }
 
@@ -482,20 +510,24 @@ class dpm {
             $vo_path = "/dpm/$domain/home/$name"
             exec { "dpm_vo_$dpm_ns_host-$domain-$name":
                 path        => "/usr/bin:/usr/sbin:/bin:/opt/lcg/bin",
-                environment => "DPNS_HOST=$dpm_ns_host",
+                environment => [
+                    "DPNS_HOST=$dpm_ns_host", "DPNS_CONNTIMEOUT=5", "DPNS_CONRETRY=2", "DPNS_CONRETRYINT=1"
+                ],
                 command     => "dpns-mkdir -p $vo_path; dpns-chmod 755 $vo_path; dpns-entergrpmap --group $name; dpns-chown root:$name $vo_path; dpns-setacl -m d:u::7,d:g::7,d:o:5 $vo_path",
                 unless      => "dpns-ls /dpm/$domain/home/$name",
-                require     => Service["dpns"],
+                require     => [ Class["dpm::client"], Service["dpns"], ],
             }
         }
 
         define pool {
             exec { "dpm_pool_$dpm_host-$name":
                 path        => "/usr/bin:/usr/sbin:/bin:/opt/lcg/bin",
-                environment => "DPM_HOST=$dpm_host",
+                environment => [
+                    "DPM_HOST=$dpm_host", "DPM_CONNTIMEOUT=5", "DPM_CONRETRY=2", "DPM_CONRETRYINT=1"
+                ],
                 command     => "dpm-addpool --poolname $name",
                 unless      => "dpm-qryconf | grep 'POOL $name '",
-                require     => Service["dpm"],
+                require     => [ Class["dpm::client"], Service["dpm"], ],
             }
         }
     }
@@ -571,7 +603,9 @@ class dpm {
         define filesystem($pool) {
             exec { "dpm_filesystem_$fqdn-$name":
                 path        => "/usr/bin:/usr/sbin:/bin:/opt/lcg/bin",
-                environment => "DPM_HOST=$dpm_host",
+                environment => [
+                    "DPM_HOST=$dpm_host", "DPM_CONNTIMEOUT=5", "DPM_CONRETRY=2", "DPM_CONRETRYINT=1"
+                ],
                 command     => "dpm-addfs --poolname $pool --server $fqdn --fs $name",
                 unless      => "dpm-qryconf | grep '  $fqdn $name '",
                 require     => Class["dpm::client"],
