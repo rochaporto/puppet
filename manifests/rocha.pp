@@ -72,6 +72,7 @@ node "rocha-slc5.cern.ch" {
     $disk_nodes = ["rocha-slc5.cern.ch"]
 
     Package { require => Yumrepo["dpm-mysql-unstable-etics", "epel", "glite-global-etics"] }
+    include cern::base::hostcert
     include dms::unstable
     include dpm::headnode
     include dpm::disknode
