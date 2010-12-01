@@ -11,9 +11,14 @@
 # Sample Usage:
 #
 class voms {
+    include glite
 
     class client {
-        package { "glite-security-voms-clients": ensure => latest, notify => Exec["glite_ldconfig"], }
+        package { "glite-security-voms-clients": 
+            ensure  => latest, 
+            notify  => Exec["glite_ldconfig"],
+            require => Package["lcg-CA"],
+        }
     }
 
     class base {
@@ -23,7 +28,8 @@ class voms {
                 owner  => root,
                 group  => root,
                 mode   => 644,
-                ensure => directory;
+                ensure => directory,
+                require => File["/etc/grid-security"];
             "vomses":
                 path    => "/opt/glite/etc/vomses",
                 owner   => root,
