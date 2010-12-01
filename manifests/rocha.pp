@@ -6,7 +6,7 @@ import "dpm"
 import "lcgutil"
 import "voms"
 
-node "rocha-slc5.dyndns.cern.ch" {
+node "rocha-slc5.cern.ch" {
 
     #
     # Cluster configuration (global values)
