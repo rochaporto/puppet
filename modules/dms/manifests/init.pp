@@ -39,7 +39,7 @@ class dms {
 
         yumrepo { "epel":
             descr    => "Extra Packages for Enterprise Linux 5 - \$basearch",
-            baseurl  => "http://mirrors.fedoraproject.org/mirrorlist?repo=epel-5&arch=$basearch",
+            baseurl  => "http://mirrors.fedoraproject.org/mirrorlist?repo=epel-5&arch=\$basearch",
             gpgcheck => 0,
             enabled  => 1,
             protect  => 0,
