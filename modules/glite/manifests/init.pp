@@ -12,27 +12,52 @@
 #
 class glite {
 
-    package { "edg-mkgridmap": ensure => latest, }
+    package { ["edg-mkgridmap", "lcg-CA"]: ensure => latest, }
 
     file { 
-        "glite_ldconf":
-            path => "/etc/ld.so.conf.d/glite.conf",
-            owner => root,
-            group => root,
-            mode => 644,
-            content => "/opt/glite/lib64";
-        "globus_ldconf":
-            path => "/etc/ld.so.conf.d/globus.conf",
-            owner => root,
-            group => root,
-            mode => 644,
-            content => "/opt/globus/lib";
-        "glite_etc":
-            path   => "/opt/glite/etc",
+        "/etc/grid-security":
             owner  => root,
             group  => root,
             mode   => 755,
             ensure => directory;
+        "glite_ldconf":
+            path    => "/etc/ld.so.conf.d/glite.conf",
+            owner   => root,
+            group   => root,
+            mode    => 644,
+            content => "/opt/glite/lib64";
+        "globus_ldconf":
+            path    => "/etc/ld.so.conf.d/globus.conf",
+            owner   => root,
+            group   => root,
+            mode    => 644,
+            content => "/opt/globus/lib";
+        "glite":
+            path   => "/opt/glite",
+            owner  => root,
+            group  => root,
+            mode   => 755,
+            ensure => directory;
+        "glite_etc":
+            path    => "/opt/glite/etc",
+            owner   => root,
+            group   => root,
+            mode    => 755,
+            ensure  => directory,
+            require => File["glite"];
+        "edg":
+            path   => "/opt/edg",
+            owner  => root,
+            group  => root,
+            mode   => 755,
+            ensure => directory;
+        "edg_etc":
+            path    => "/opt/edg/etc",
+            owner   => root,
+            group   => root,
+            mode    => 755,
+            ensure  => directory,
+            require => File["edg"];
         "/usr/share/augeas/lenses/dist/mkgridmap.aug":
             owner   => root,
             group   => root,
@@ -42,9 +67,9 @@ class glite {
     }
 
     exec { "glite_ldconfig":
-        path => "/usr/bin:/usr/sbin:/bin:/sbin",
-        command => "ldconfig",
-        subscribe => [ File["glite_ldconf"], File["globus_ldconf"] ],
+        path        => "/usr/bin:/usr/sbin:/bin:/sbin",
+        command     => "ldconfig",
+        subscribe   => [ File["glite_ldconf"], File["globus_ldconf"] ],
         refreshonly => true,
     }
 
@@ -60,12 +85,12 @@ class glite {
         }
 
         cron { "$name-cron":
-            command => "(date; /opt/edg/libexec/edg-mkgridmap/edg-mkgridmap.pl --conf=$conffile --output=$mapfile --safe) >> $logfile 2>&1",
+            command     => "(date; /opt/edg/libexec/edg-mkgridmap/edg-mkgridmap.pl --conf=$conffile --output=$mapfile --safe) >> $logfile 2>&1",
             environment => "PATH=/sbin:/bin:/usr/sbin:/usr/bin",
-            user    => root,
-            hour    => [5,11,18,23],
-            minute  => 55,
-            require => [
+            user        => root,
+            hour        => [5,11,18,23],
+            minute      => 55,
+            require     => [
                 File["$name-conf"],
                 Package["edg-mkgridmap"],
             ],
@@ -78,6 +103,7 @@ class glite {
             conffile => "/opt/edg/etc/edg-mkgridmap.conf",
             mapfile  => "/etc/grid-security/grid-mapfile",
             logfile  => "/var/log/edg-mkgridmap.log",
+            require  => [ File["edg_etc"], File["/etc/grid-security"] ],
         }
     }
 
