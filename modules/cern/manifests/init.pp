@@ -67,33 +67,20 @@ class cern {
             }
 
             file {
-                "/etc/grid-security":
-                    mode => 755;
                 "/etc/grid-security/hostcert.pem":
                     mode => 644,
-                    require => [ File["/etc/grid-security"], Exec["hostcert_putcert"] ];
+                    require => [ File["/etc/grid-security"], Exec["hostcert_put"] ];
                 "/etc/grid-security/hostkey.pem":
                     mode => 400,
-                    require => [ Exec["hostcert_putcert"] ];
+                    require => [ File["/etc/grid-security/hostcert.pem"] ];
             }
 
             exec { 
-                "hostcert_tmpclean":
-                    path    => "/usr/bin:/usr/sbin:/bin:/sbin",
-                    command => "rm -f /tmp/*/\$HOSTNAME/*host*pem",
-                    refreshonly => true;
-                "hostcert_get":
-                    path        => "/usr/bin:/usr/sbin:/bin:/sbin",
+                "hostcert_put":
                     environment => "HCMPASS=$cern_hcm_pass",
-                    command     => "echo \$HCMPASS | host-certificate-manager --username gdadmin --nosindes `hostname -s`",
-                    require     => Package["host-certificate-manager"],
-                    refreshonly => true;
-                "hostcert_putcert":
-                    path    => "/usr/bin:/usr/sbin:/bin:/sbin",
-                    command => "cp /tmp/*/\$HOSTNAME/host*.pem /etc/grid-security",
-                    creates => ["/etc/grid-security/hostcert.pem", "/etc/grid-security/hostkey.pem"],
-                    require => [ File["/etc/grid-security"], Exec["hostcert_get"] ],
-                    notify  => Exec["hostcert_tmpclean"];
+                    path        => "/usr/bin:/usr/sbin:/bin:/sbin",
+                    command     => "rm -f /tmp/*/`hostname -f`/*host*pem; echo \$HCMPASS | host-certificate-manager --username gdadmin --nosindes `hostname -s`; cp /tmp/*/`hostname -f`/host*.pem /etc/grid-security",
+                    creates     => [ "/etc/grid-security/hostcert.pem", "/etc/grid-security/hostkey.pem" ],
             }
         }
     }
@@ -141,8 +128,19 @@ class cern {
                     baseurl  => "http://swrepsrv.cern.ch/yum/CERN_CC/x86_64_slc5/",
                     gpgcheck => 0,
                     enabled  => 0;
+                "epel":
+                    descr          => "Extra Packages for Enterprise Linux 5 - $basearch",
+                    mirrorlist     => "http://mirrors.fedoraproject.org/mirrorlist?repo=epel-5&arch=\$basearch",
+                    failovermethod => "priority",
+                    enabled        => 1,
+                    gpgcheck       => 1,
+                    gpgkey         => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL";
+                "lcg-ca":
+                    descr    => "LCG Certificate Authorities (CAs)",
+                    baseurl  => "http://linuxsoft.cern.ch/LCG-CAs/current",
+                    gpgcheck => 0,
+                    enabled  => 1;
             }
         }
     }
-
 }
