@@ -263,6 +263,8 @@ class dpm {
             enable     => true,
             ensure     => running,
             hasrestart => true,
+            hasstatus  => true,
+            name       => "dpm",
             subscribe  => File["dpm-config", "dpm-sysconfig"],
             require    => [ 
                 Package["DPM-server-mysql"], File["dpm-config"], File["dpm-sysconfig"], 
@@ -326,11 +328,12 @@ class dpm {
             enable     => true,
             ensure     => running,
             hasrestart => true,
+            hasstatus  => true,
             name       => "dpnsdaemon",
             subscribe  => File["dpns-config", "dpns-sysconfig"],
             require    => [ 
                 Package["DPM-name-server-mysql"], File["dpns-config"], File["dpns-sysconfig"], 
-			    File["dpns-logfile"], Mysql::Server::Grant["cns_db_$dpm_ns_dbuser"], 
+                File["dpns-logfile"], Mysql::Server::Grant["cns_db_$dpm_ns_dbuser"], 
                 Mysql::Server::Db["cns_db"], File["/etc/grid-security/dpmmgr/dpmcert.pem"],
                 File["/etc/grid-security/dpmmgr/dpmcert.pem"], 
             ],
@@ -374,6 +377,7 @@ class dpm {
             ensure     => running,
             name       => "srmv2.2",
             hasrestart => true,
+            hasstatus  => true,
             subscribe  => File["srm-sysconfig"],
             require    => [ 
                 Service["dpm"], Service["dpns"], Package["DPM-srm-server-mysql"], 
@@ -419,6 +423,7 @@ class dpm {
             enable     => true,
             ensure     => running,
             hasrestart => true,
+            hasstatus  => true,
             subscribe  => File["dpm-gsiftp-sysconfig"],
             require    => [ 
                 Package["DPM-DSI"], Package["vdt_globus_data_server"], Package["dpm-devel"],
@@ -460,6 +465,7 @@ class dpm {
             enable     => true,
             ensure     => running,
             hasrestart => true,
+            hasstatus  => true,
             subscribe  => File["rfio-sysconfig"],
             require    => [
                 Package["DPM-rfio-server"], File["rfio-sysconfig"], File["rfio-logdir"], 
