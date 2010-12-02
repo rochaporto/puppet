@@ -129,10 +129,10 @@ node 'vmdm0002.cern.ch', 'vmdm0009.cern.ch' inherits service {
     include dpm::disknode
 
     # setup filesystems (we use loopback partitions as this is a testing VM machine)
-    dpm::disknode::loopback { '/dpmfs1': blocks => 5000, }
-    dpm::disknode::filesystem { '/dpmfs1': pool => 'pool1', }
+    dpm::disknode::loopback { "dpmfs1": fs => "/dpmfs1", blocks => 5000, }
+    dpm::disknode::filesystem { "dpmfs1": fs => "/dpmfs1", pool => 'pool1', }
 
-    dpm::disknode::loopback { '/dpmfs2': blocks => 5000, }
-    dpm::disknode::filesystem { '/dpmfs2': pool => 'pool2', }
+    dpm::disknode::loopback { "dpmfs2": fs => "/dpmfs2", blocks => 5000, }
+    dpm::disknode::filesystem { "dpmfs2": fs => "/dpmfs2", pool => 'pool1', }
 }
 

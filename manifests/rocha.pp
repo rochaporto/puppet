@@ -71,7 +71,7 @@ node "rocha-slc5.cern.ch" {
     # TODO: replace this with an exported resource, so that disk nodes simply publish themselves
     $disk_nodes = ["rocha-slc5.cern.ch"]
 
-    Package { require => Yumrepo["dpm-mysql-unstable-etics", "epel", "glite-global-etics"] }
+    Package { require => Yumrepo["dpm-mysql-unstable-etics", "lcgutil-head-etics", "epel", "glite-global-etics"] }
     include cern::base::hostcert
     include dms::unstable
     include dpm::headnode
@@ -83,13 +83,18 @@ node "rocha-slc5.cern.ch" {
     include dpm::dteam
 
     # setup supported domain/vo(s)
-    dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
-    dpm::headnode::vo { 'dteam': domain => 'cern.ch', require => Dpm::Headnode::Domain['cern.ch'], }
+    dpm::headnode::domain { "cern.ch": require => Service["dpns"], }
+    dpm::headnode::vo { "dteam": domain => "cern.ch", require => Dpm::Headnode::Domain["cern.ch"], }
 
     # setup pools
-    dpm::headnode::pool { 'pool1': require => Service['dpm'] }
+    dpm::headnode::pool { "pool1": require => Service["dpm"] }
 
     # setup filesystems (we use loopback partitions as this is a testing VM machine)
-    dpm::disknode::loopback { '/dpmfs1': blocks => 100, }
-    dpm::disknode::filesystem { '/dpmfs1': pool => 'pool1', }
+    dpm::disknode::loopback { "dpmfs1": fs => "/dpmfs1", blocks => 100, }
+    dpm::disknode::filesystem { "dpmfs1": fs => "/dpmfs1", 
+        pool => 'pool1', 
+        require => [ 
+            Dpm::Headnode::Pool["pool1"], Dpm::Disknode::Loopback["dpmfs1"], Service["dpm"],
+        ],
+    }
 }
