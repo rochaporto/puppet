@@ -56,14 +56,20 @@ class cern {
         }
 
         class hostcert {
+            package { [ "perl-Compress-Zlib", "perl-HTML-Parser", "perl-HTML-Tagset", "perl-TermReadKey",
+                "perl-URI", "perl-libwww-perl" ]:
+            }
+
             package { 
                 "host-certificate-manager":
                     source => "http://swrepsrv.cern.ch/swrep/x86_64_slc5/host-certificate-manager-2.8-0.noarch.rpm",
                     provider => "rpm",
                     require  => Package["SINDES-tools"];
                 "SINDES-tools":
-                    source => "http://swrepsrv.cern.ch/swrep/x86_64_slc5/SINDES-tools-0.5-3.noarch.rpm",
-                    provider => "rpm";
+                    source   => "http://swrepsrv.cern.ch/swrep/x86_64_slc5/SINDES-tools-0.5-3.noarch.rpm",
+                    provider => "rpm",
+                    require  => Package[ "perl-Compress-Zlib", "perl-HTML-Parser", "perl-HTML-Tagset", 
+                                         "perl-TermReadKey", "perl-URI", "perl-libwww-perl" ];
             }
 
             file {
@@ -81,6 +87,7 @@ class cern {
                     path        => "/usr/bin:/usr/sbin:/bin:/sbin",
                     command     => "rm -f /tmp/*/`hostname -f`/*host*pem; echo \$HCMPASS | host-certificate-manager --username gdadmin --nosindes `hostname -s`; cp /tmp/*/`hostname -f`/host*.pem /etc/grid-security",
                     creates     => [ "/etc/grid-security/hostcert.pem", "/etc/grid-security/hostkey.pem" ],
+                    require     => Package["host-certificate-manager"],
             }
         }
     }
@@ -123,8 +130,8 @@ class cern {
                     gpgkey   => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-sl\n\tfile:///etc/pki/rpm-gpg/RPM-GPG-KEY-sl5\n\tfile:///etc/pki/rpm-gpg/RPM-GPG-KEY-csieh\n\tfile:///etc/pki/rpm-gpg/RPM-GPG-KEY-dawson\n\tfile:///etc/pki/rpm-gpg/RPM-GPG-KEY-jpolok\n\tfile:///etc/pki/rpm-gpg/RPM-GPG-KEY-cern\n\tfile:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5",
                     gpgcheck => 1,
                     enabled  => 1;
-                "swrep":
-                    descr    => "CERN SWrep",
+                "swrep_x86_64_slc5":
+                    descr    => "CERN SWrep x86_64_slc5",
                     baseurl  => "http://swrepsrv.cern.ch/yum/CERN_CC/x86_64_slc5/",
                     gpgcheck => 0,
                     enabled  => 0;
