@@ -77,6 +77,7 @@ class dpm {
     }
 
     class shift {
+
         define entry($component, $type) {
             augeas { "shiftentry_$component-$type":
                 changes => [
@@ -85,16 +86,18 @@ class dpm {
                     "set /files/etc/shift.conf/01/type $type",
                 ],
                 onlyif => "match /files/etc/shift.conf/*[name='$component' and type='$type'] size == 0",
+                require => File["/etc/shift.conf"],
             }
         }
 
         define value($component, $type, $value) {
+
             augeas { "shiftvalue_$component-$type-$value":
                 changes => [
                     "set /files/etc/shift.conf/*[name='$component' and type='$type']/value[0] $value",
                 ],
-                onlyif => "match /files/etc/shift.conf/*[name='$component' and type='$type' and value='$value'] size == 0",
-                require => File["/usr/share/augeas/lenses/dist/shift.aug"],
+                onlyif  => "match /files/etc/shift.conf/*[name='$component' and type='$type' and value='$value'] size == 0",
+                require => [ File["/usr/share/augeas/lenses/dist/shift.aug"], File["/etc/shift.conf"], ]
             }
         }
 
@@ -155,6 +158,11 @@ class dpm {
         }
 
         file { 
+            "/etc/shift.conf":
+                owner  => root,
+                group  => root,
+                mode   => 644,
+                ensure => present;
             "/etc/grid-security/dpmmgr":
                 owner  => dpmmgr,
                 group  => dpmmgr,
@@ -208,6 +216,13 @@ class dpm {
                 ensure  => present,
                 content => template("dpm/shift.aug"),    
         }
+
+        # TODO: Replace this with proper iptables entries for each daemon
+        exec { "iptables_dpm":
+            path    => "/usr/bin:/usr/sbin:/bin:/sbin",
+            command => "iptables -F; iptables-save",
+            refreshonly => true,
+        }
     }
 
     class dpmserver inherits base {
@@ -237,6 +252,12 @@ class dpm {
                 group   => root,
                 mode    => 644,
                 content => template("dpm/dpm-sysconfig.erb");
+            "dpm-logdir":
+                name    => "/var/log/dpm",
+                ensure  => directory,
+                owner   => dpmmgr,
+                group   => dpmmgr,
+                mode    => 755;
             "dpm-logfile":
                 name    => $operatingsystem ? {
                     default => $dpm_logfile,
@@ -245,7 +266,8 @@ class dpm {
                 owner   => dpmmgr,
                 group   => dpmmgr,
                 mode    => 644,
-                recurse => true;
+                recurse => true,
+                require => File["dpm-logdir"];
         }
 
         mysql::server::grant { "dpm_db_$dpm_dbuser":
@@ -259,6 +281,13 @@ class dpm {
             source => "/opt/lcg/share/DPM/create_dpm_tables_mysql.sql",
         }
 
+        dpm::shift::trust_entry { "trustentry_dpm": component => "DPM", }
+        dpm::shift::trust_value {
+            "trustvalue_dpm_$dpm_host": 
+                component => "DPM", host => $dpm_host,
+                require => Dpm::Shift::Trust_entry["trustentry_dpm"];
+        }
+
         service { "dpm":
             enable     => true,
             ensure     => running,
@@ -269,7 +298,8 @@ class dpm {
             require    => [ 
                 Package["DPM-server-mysql"], File["dpm-config"], File["dpm-sysconfig"], 
                 File["dpm-logfile"], Mysql::Server::Grant["dpm_db_$dpm_dbuser"], Mysql::Server::Db["dpm_db"],
-                File["/etc/grid-security/dpmmgr/dpmcert.pem"],
+                File["/etc/grid-security/dpmmgr/dpmcert.pem"], Exec["iptables_dpm"],
+                Dpm::Shift::Trust_value["trustvalue_dpm_$dpm_host"],
             ],
         }
 
@@ -302,6 +332,12 @@ class dpm {
                 group   => root,
                 mode    => 644,
                 content => template("dpm/dpns-sysconfig.erb");
+            "dpns-logdir":
+                name    => "/var/log/dpns",
+                ensure  => directory,
+                owner   => dpmmgr,
+                group   => dpmmgr,
+                mode    => 755;
             "dpns-logfile":
                 name    => $operatingsystem ? {
                     default => $dpm_ns_logfile,
@@ -310,7 +346,8 @@ class dpm {
                 owner   => dpmmgr,
                 group   => dpmmgr,
                 mode    => 644,
-                recurse => true;
+                recurse => true,
+                require => File["dpns-logdir"];
         }
 
         mysql::server::grant { "cns_db_$dpm_ns_dbuser":
@@ -324,6 +361,13 @@ class dpm {
             source => "/opt/lcg/share/DPM/create_dpns_tables_mysql.sql",
         }
 
+        dpm::shift::trust_entry { "trustentry_dpns": component => "DPNS", }
+        dpm::shift::trust_value {
+            "trustvalue_dpns_$dpm_ns_host": 
+                component => "DPNS", host => $dpm_ns_host,
+                require => Dpm::Shift::Trust_entry["trustentry_dpns"];
+        }
+
         service { "dpns":
             enable     => true,
             ensure     => running,
@@ -335,7 +379,8 @@ class dpm {
                 Package["DPM-name-server-mysql"], File["dpns-config"], File["dpns-sysconfig"], 
                 File["dpns-logfile"], Mysql::Server::Grant["cns_db_$dpm_ns_dbuser"], 
                 Mysql::Server::Db["cns_db"], File["/etc/grid-security/dpmmgr/dpmcert.pem"],
-                File["/etc/grid-security/dpmmgr/dpmcert.pem"], 
+                File["/etc/grid-security/dpmmgr/dpmcert.pem"], Exec["iptables_dpm"], 
+                Dpm::Shift::Trust_value["trustvalue_dpns_$dpm_ns_host"],
             ],
         }
     }
@@ -369,7 +414,8 @@ class dpm {
                 owner   => dpmmgr,
                 group   => dpmmgr,
                 mode    => 644,
-                recurse => true;
+                recurse => true,
+                require => File["srm-logdir"],
         }
 
         service { "srm":
@@ -381,7 +427,7 @@ class dpm {
             subscribe  => File["srm-sysconfig"],
             require    => [ 
                 Service["dpm"], Service["dpns"], Package["DPM-srm-server-mysql"], 
-                File["srm-sysconfig"], File["srm-logdir"], File["srm-logfile"]
+                File["srm-sysconfig"], File["srm-logdir"], File["srm-logfile"],
             ],
         }
     }
@@ -416,7 +462,8 @@ class dpm {
                 owner   => root,
                 group   => root,
                 mode    => 666,
-                recurse => true;
+                recurse => true,
+                require => File["dpm-gsiftp-logdir"],
         }
 
         service { "dpm-gsiftp":
@@ -458,7 +505,15 @@ class dpm {
                 owner   => dpmmgr,
                 group   => dpmmgr,
                 mode    => 666,
-                recurse => true;
+                recurse => true,
+                require => File["rfio-logdir"];
+        }
+
+        dpm::shift::trust_entry { "trustentry_rfiod_all": component => "RFIOD", all => true, }
+        dpm::shift::trust_value { 
+            "trustvalue_rfiod_$dpm_host": 
+                component => "RFIOD", host => $dpm_host, all => true, 
+                require => Dpm::Shift::Trust_entry["trustentry_rfiod_all"];
         }
 
         service { "rfiod":
@@ -469,7 +524,7 @@ class dpm {
             subscribe  => File["rfio-sysconfig"],
             require    => [
                 Package["DPM-rfio-server"], File["rfio-sysconfig"], File["rfio-logdir"], 
-                File["rfio-logfile"] 
+                File["rfio-logfile"], Dpm::Shift::Trust_value["trustvalue_rfiod_$dpm_host"],
             ],
         }
     }
@@ -485,20 +540,6 @@ class dpm {
         include dpmserver
         include srm
         include client
-
-        dpm::shift::trust_entry { "trustentry_dpns": component => "DPNS", }
-        dpm::shift::trust_value {
-            "trustvalue_dpns_$dpns_host": 
-                component => "DPNS", host => $dpm_ns_host,
-                require => Dpm::Shift::Trust_entry["trustentry_dpns"];
-        }
-
-        dpm::shift::trust_entry { "trustentry_dpm": component => "DPM", }
-        dpm::shift::trust_value {
-            "trustvalue_dpm_$dpm_host": 
-                component => "DPM", host => $dpm_ns_host,
-                require => Dpm::Shift::Trust_entry["trustentry_dpm"];
-        }
 
         define domain {
             exec { "dpm_domain_$dpm_ns_host-$name":
@@ -519,7 +560,7 @@ class dpm {
                 environment => [
                     "DPNS_HOST=$dpm_ns_host", "DPNS_CONNTIMEOUT=5", "DPNS_CONRETRY=2", "DPNS_CONRETRYINT=1"
                 ],
-                command     => "dpns-mkdir -p $vo_path; dpns-chmod 755 $vo_path; dpns-entergrpmap --group $name; dpns-chown root:$name $vo_path; dpns-setacl -m d:u::7,d:g::7,d:o:5 $vo_path",
+                command     => "dpns-mkdir -p $vo_path; dpns-chmod 755 $vo_path; dpns-entergrpmap --group $name; dpns-chown root:$name $vo_path; dpns-chmod 775 $vo_path",
                 unless      => "dpns-ls /dpm/$domain/home/$name",
                 require     => [ Class["dpm::client"], Service["dpns"], ],
             }
@@ -543,18 +584,11 @@ class dpm {
         include rfio
         include client
 
-        dpm::shift::trust_entry { "trustentry_rfiod_all": component => "RFIOD", all => true, }
-        dpm::shift::trust_value { 
-            "trustvalue_rfiod_$dpns_host": 
-                component => "RFIOD", host => $dpm_ns_host, all => true, 
-                require => Dpm::Shift::Trust_entry["trustentry_rfiod_all"];
-        }
+        define loopback($fs, $blocks, $bs="1M", $type="ext3") {
+            $file = "$fs-partition-file"
 
-        define loopback($blocks, $bs="1M", $type="ext3") {
-            $file = "$name-partition-file"
-
-            file { "loopback_$fqdn-$name":
-                path => $name,
+            file { "loopback_$fqdn-$fs":
+                path => $fs,
                 owner => dpmmgr,
                 group => dpmmgr,
                 mode => 770,
@@ -569,51 +603,51 @@ class dpm {
             }
 
             exec { 
-                "dpm_loop_dd_$fqdn-$name":
+                "dpm_loop_dd_$fqdn-$fs":
                     path    => "/usr/bin:/usr/sbin:/bin:/sbin",
                     command => "dd if=/dev/zero of=$file bs=$bs count=$blocks",
                     creates  => $file;
-                "dpm_loop_mkfs_$fqdn-$name":
+                "dpm_loop_mkfs_$fqdn-$fs":
                     path    => "/usr/bin:/usr/sbin:/bin:/sbin",
                     command => "mkfs.$type -F $file",
-                    unless  => "df | grep $name",
+                    unless  => "df | grep $fs",
                     require => [
-                        Exec["dpm_loop_dd_$fqdn-$name"],
-                        File["loopback_$fqdn-$name"],
+                        Exec["dpm_loop_dd_$fqdn-$fs"],
+                        File["loopback_$fqdn-$fs"],
                     ];
-                "dpm_loop_mount_$fqdn-$name":
+                "dpm_loop_mount_$fqdn-$fs":
                     path    => "/usr/bin:/usr/sbin:/bin:/sbin",
-                    command => "mount -o loop $file $name; chmod 770 $name; chown dpmmgr.dpmmgr $name",
-                    unless  => "df | grep $name",
+                    command => "mount -o loop $file $fs; chmod 770 $fs; chown dpmmgr.dpmmgr $fs",
+                    unless  => "df | grep $fs",
                     require => [
-                        Exec["dpm_loop_mkfs_$fqdn-$name"],
-                        File["loopback_$fqdn-$name"],
+                        Exec["dpm_loop_mkfs_$fqdn-$fs"],
+                        File["loopback_$fqdn-$fs"],
                         File["loopback_$fqdn-$file"],
                     ];
             }
 
-            augeas { "loopback_augeas_$fqdn-$name":
+            augeas { "loopback_augeas_$fqdn-$fs":
                 changes => [
                     "set /files/etc/fstab/01/spec $file",
-                    "set /files/etc/fstab/01/file $name",
+                    "set /files/etc/fstab/01/file $fs",
                     "set /files/etc/fstab/01/vfstype $type",
                     "set /files/etc/fstab/01/opt loop",
                     "set /files/etc/fstab/01/dump 0",
                     "set /files/etc/fstab/01/passno 0",
                 ],
-                onlyif => "match /files/etc/fstab/*[file = '$name'] size == 0",
-                require => Exec["dpm_loop_mkfs_$fqdn-$name"],
+                onlyif => "match /files/etc/fstab/*[file = '$fs'] size == 0",
+                require => Exec["dpm_loop_mkfs_$fqdn-$fs"],
             }
         }
 
-        define filesystem($pool) {
-            exec { "dpm_filesystem_$fqdn-$name":
+        define filesystem($fs, $pool) {
+            exec { "dpm_filesystem_$fqdn-$fs":
                 path        => "/usr/bin:/usr/sbin:/bin:/opt/lcg/bin",
                 environment => [
                     "DPM_HOST=$dpm_host", "DPM_CONNTIMEOUT=5", "DPM_CONRETRY=2", "DPM_CONRETRYINT=1"
                 ],
-                command     => "dpm-addfs --poolname $pool --server $fqdn --fs $name",
-                unless      => "dpm-qryconf | grep '  $fqdn $name '",
+                command     => "dpm-addfs --poolname $pool --server $fqdn --fs $fs",
+                unless      => "dpm-qryconf | grep '  $fqdn $fs '",
                 require     => Class["dpm::client"],
             }
         }
