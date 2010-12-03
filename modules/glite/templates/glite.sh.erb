@@ -1,0 +1,7 @@
+glitebin=( /opt/globus/bin /opt/glite/bin /opt/lcg/bin /opt/edg/bin )
+for gbin in "${glitebin[@]}"
+do
+    if ! echo ${PATH} | /bin/grep -q $gbin ; then 
+        PATH=${PATH}:$gbin
+    fi  
+done
