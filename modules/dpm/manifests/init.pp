@@ -85,7 +85,7 @@ class dpm {
                     "set /files/etc/shift.conf/01/type $type",
                 ],
                 onlyif => "match /files/etc/shift.conf/*[name='$component' and type='$type'] size == 0",
-                require => File["/etc/shift.conf"],
+                require => [ File["/usr/share/augeas/lenses/dist/shift.aug"], File["/etc/shift.conf"], ],
             }
         }
 
@@ -596,25 +596,26 @@ class dpm {
             $file = "$fs-partition-file"
 
             file { "loopback_$fqdn-$fs":
-                path => $fs,
-                owner => dpmmgr,
-                group => dpmmgr,
-                mode => 770,
+                path   => $fs,
+                owner  => dpmmgr,
+                group  => dpmmgr,
+                mode   => 770,
                 ensure => directory,
             }
 
             file { "loopback_$fqdn-$file":
-                path => $file,
-                owner => dpmmgr,
-                group => dpmmgr,
-                mode => 770,
+                path    => $file,
+                owner   => dpmmgr,
+                group   => dpmmgr,
+                mode    => 770,
+                require => Exec["dpm_loop_dd_$fqdn-$fs"],
             }
 
             exec { 
                 "dpm_loop_dd_$fqdn-$fs":
                     path    => "/usr/bin:/usr/sbin:/bin:/sbin",
                     command => "dd if=/dev/zero of=$file bs=$bs count=$blocks",
-                    creates  => $file;
+                    creates => $file;
                 "dpm_loop_mkfs_$fqdn-$fs":
                     path    => "/usr/bin:/usr/sbin:/bin:/sbin",
                     command => "mkfs.$type -F $file",
@@ -643,7 +644,7 @@ class dpm {
                     "set /files/etc/fstab/01/dump 0",
                     "set /files/etc/fstab/01/passno 0",
                 ],
-                onlyif => "match /files/etc/fstab/*[file = '$fs'] size == 0",
+                onlyif  => "match /files/etc/fstab/*[file = '$fs'] size == 0",
                 require => Exec["dpm_loop_mkfs_$fqdn-$fs"],
             }
         }

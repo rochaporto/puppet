@@ -15,6 +15,12 @@ class glite {
     package { ["edg-mkgridmap", "lcg-CA"]: ensure => latest, }
 
     file { 
+        "/etc/profile.d/glite.sh":
+            owner  => root,
+            group  => root,
+            mode   => 755,
+            content => template("glite/glite.sh.erb"),
+            ensure => present;
         "/etc/grid-security":
             owner  => root,
             group  => root,
@@ -76,7 +82,6 @@ class glite {
     class gridmap {
 
         define mkgridmap($conffile, $mapfile, $logfile) {
-        
             file { "$name-conf":
                 path    => $conffile,
                 owner   => root,
@@ -96,6 +101,12 @@ class glite {
                     File["$name-conf"],
                     Package["edg-mkgridmap"],
                 ],
+            }
+
+            exec { "$conffile-exec":
+                path        => "/usr/bin:/usr/sbin:/bin:/opt/lcg/bin",
+                command     => "/opt/edg/libexec/edg-mkgridmap/edg-mkgridmap.pl --conf=$conffile --output=$mapfile --safe",
+                refreshonly => true,
             }
         }
 
@@ -121,6 +132,7 @@ class glite {
                 ],
                 onlyif => "match /files$file/*[type='group' and uri='$voms_uri'] size == 0",
                 require => File[$file],
+                notify  => Exec["$file-exec"],
             }
             augeas { "vomsgroupupdate_$file-$voms_uri-$map":
                 changes => [
@@ -128,6 +140,7 @@ class glite {
                 ],
                 onlyif => "match /files$file/*[type='group' and uri='$voms_uri' and map!='$map'] size > 0",
                 require => File[$file],
+                notify  => Exec["$file-exec"],
             }
         }
     
