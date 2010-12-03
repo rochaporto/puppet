@@ -83,7 +83,6 @@ class dpm {
                 changes => [
                     "set /files/etc/shift.conf/01/name $component",
                     "set /files/etc/shift.conf/01/type $type",
-                    "set /files/etc/shift.conf/01/type $type",
                 ],
                 onlyif => "match /files/etc/shift.conf/*[name='$component' and type='$type'] size == 0",
                 require => File["/etc/shift.conf"],
