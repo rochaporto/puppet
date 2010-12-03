@@ -152,4 +152,9 @@ class glite {
         }
     }
 
+    class nfs {
+        class client {
+            package { "kernel-pnfs": ensure => latest, }
+        }
+    }
 }

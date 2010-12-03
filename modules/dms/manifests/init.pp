@@ -40,6 +40,11 @@ class dms {
                 gpgcheck => 0,
                 enabled  => 1,
                 protect  => 0;
+            "nfsv4.1":
+                descr    => "Scientific Linux pNFS enabled kernel",
+                baseurl  => "http://www.dcache.org/chimera/repo",
+                gpgcheck => 0,
+                enabled  => 1,
         }
     }
 }

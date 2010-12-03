@@ -71,7 +71,12 @@ node "rocha-slc5.cern.ch" {
     # TODO: replace this with an exported resource, so that disk nodes simply publish themselves
     $disk_nodes = ["rocha-slc5.cern.ch"]
 
-    Package { require => Yumrepo["dpm-mysql-unstable-etics", "lcgutil-head-etics", "epel", "glite-global-etics"] }
+    Package { 
+        require => Yumrepo[
+            "dpm-mysql-unstable-etics", "lcgutil-head-etics", "epel", "glite-global-etics", "nfsv4.1"
+        ],
+    }
+
     include cern::base::hostcert
     include dms::unstable
     include dpm::headnode
@@ -81,6 +86,7 @@ node "rocha-slc5.cern.ch" {
     include lcgutil::client
     include dpm::client
     include dpm::dteam
+    include glite::nfs::client
 
     # setup supported domain/vo(s)
     dpm::headnode::domain { "cern.ch": require => Service["dpns"], }
