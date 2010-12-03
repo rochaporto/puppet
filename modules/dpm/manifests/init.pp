@@ -69,7 +69,7 @@ import "mysql"
 class dpm {
 
     class lcgdmmap {
-        glite::mkgridmap { "lcgdm-mkgridmap":
+        glite::gridmap::mkgridmap { "lcgdm-mkgridmap":
             conffile => "/opt/lcg/etc/lcgdm-mkgridmap.conf",
             mapfile  => "/opt/lcg/etc/lcgdm-mapfile",
             logfile  => "/var/log/lcgdm-mkgridmap.log",
@@ -214,14 +214,23 @@ class dpm {
                 group   => root,
                 mode    => 744,
                 ensure  => present,
-                content => template("dpm/shift.aug"),    
+                content => template("dpm/shift.aug");
+            "/etc/sysconfig/iptables": # TODO: temporary fix, we should set iptables properly
+                owner   => root,
+                group   => root,
+                mode    => 600,
+                ensure  => present,
+                content => template("dpm/iptables.erb"),
+                notify  => Service["iptables"];
         }
 
-        # TODO: Replace this with proper iptables entries for each daemon
-        exec { "iptables_dpm":
-            path    => "/usr/bin:/usr/sbin:/bin:/sbin",
-            command => "iptables -F; iptables-save",
-            refreshonly => true,
+        service { "iptables":
+            enable     => true,
+            ensure     => running,
+            hasrestart => true,
+            hasstatus  => true,
+            name       => "iptables",
+            subscribe  => File["/etc/sysconfig/iptables"],
         }
     }
 
@@ -298,7 +307,7 @@ class dpm {
             require    => [ 
                 Package["DPM-server-mysql"], File["dpm-config"], File["dpm-sysconfig"], 
                 File["dpm-logfile"], Mysql::Server::Grant["dpm_db_$dpm_dbuser"], Mysql::Server::Db["dpm_db"],
-                File["/etc/grid-security/dpmmgr/dpmcert.pem"], Exec["iptables_dpm"],
+                File["/etc/grid-security/dpmmgr/dpmcert.pem"],
                 Dpm::Shift::Trust_value["trustvalue_dpm_$dpm_host"],
             ],
         }
@@ -379,7 +388,7 @@ class dpm {
                 Package["DPM-name-server-mysql"], File["dpns-config"], File["dpns-sysconfig"], 
                 File["dpns-logfile"], Mysql::Server::Grant["cns_db_$dpm_ns_dbuser"], 
                 Mysql::Server::Db["cns_db"], File["/etc/grid-security/dpmmgr/dpmcert.pem"],
-                File["/etc/grid-security/dpmmgr/dpmcert.pem"], Exec["iptables_dpm"], 
+                File["/etc/grid-security/dpmmgr/dpmcert.pem"],
                 Dpm::Shift::Trust_value["trustvalue_dpns_$dpm_ns_host"],
             ],
         }
@@ -656,25 +665,46 @@ class dpm {
     class atlas inherits voms::atlas {
         include dpm::lcgdmmap
 
-        voms::base::group { "dpm_atlas_cern":
+        # grid-mapfile mapping to local account (we use nobody, no pool accounts needed)
+        glite::gridmap::group { "voms_atlas_cern":
+            file     => "/opt/edg/etc/edg-mkgridmap.conf",
+            voms_uri => "vomss://voms.cern.ch:8443/voms/atlas?/atlas",
+            map      => "nobody",
+        }
+
+        # Mapping user to VO for case of proxies with no VOMS info
+        glite::gridmap::group { "dpm_atlas_cern":
             file     => "/opt/lcg/etc/lcgdm-mkgridmap.conf",
             voms_uri => "vomss://voms.cern.ch:8443/voms/atlas?/atlas",
-            vo       => "atlas",
+            map      => "atlas",
         }
     }
 
     class dteam inherits voms::dteam {
         include dpm::lcgdmmap
 
-        voms::base::group { 
+        # grid-mapfile mapping to local account (we use nobody, no pool accounts needed)
+        glite::gridmap::group { 
+            "voms_dteam_cern":
+                file     => "/opt/edg/etc/edg-mkgridmap.conf",
+                voms_uri => "vomss://voms.cern.ch:8443/voms/dteam?/dteam",
+                map      => "nobody";
+            "voms_dteam_tbed":
+                file     => "/opt/edg/etc/edg-mkgridmap.conf",
+                voms_uri => "vomss://lxbra2309.cern.ch:8443/voms/dteam?/dteam",
+                map      => "nobody";
+        }
+
+        # Mapping user to VO for case of proxies with no VOMS info
+        glite::gridmap::group { 
             "dpm_dteam_cern":
                 file     => "/opt/lcg/etc/lcgdm-mkgridmap.conf",
                 voms_uri => "vomss://voms.cern.ch:8443/voms/dteam?/dteam",
-                vo       => "dteam";
+                map      => "dteam";
             "dpm_dteam_tbed":
                 file     => "/opt/lcg/etc/lcgdm-mkgridmap.conf",
                 voms_uri => "vomss://lxbra2309.cern.ch:8443/voms/dteam?/dteam",
-                vo       => "dteam";
+                map      => "dteam";
         }
     }
 

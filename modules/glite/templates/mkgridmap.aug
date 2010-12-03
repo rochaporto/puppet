@@ -15,7 +15,7 @@ module Mkgridmap =
   let word = /[^# \n\t]+/
   let record = [ seq "group" . [ label "type" . store word ] . sep_spc .
                                [ label "uri" . store word ] . sep_spc .
-                               [ label "vo" . store word ]
+                               [ label "map" . store word ]
                  . (comment|eol) ]
 
   let lns = ( empty | comment | record ) *

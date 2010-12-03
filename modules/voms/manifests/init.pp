@@ -68,18 +68,6 @@ class voms {
                     require => File["vomses"];
             }
         }
-
-        define group($file, $voms_uri, $vo) {
-            augeas { "vomsgroup_$file-$voms_uri-$vo":
-                changes => [
-                    "set /files$file/01/type group",
-                    "set /files$file/01/uri $voms_uri",
-                    "set /files$file/01/vo $vo",
-                ],
-                onlyif => "match /files$file/*[type='group' and uri='$voms_uri' and vo='$vo'] size == 0",
-                require => File[$file],
-            }
-        }
     }
 
     class atlas {
@@ -100,12 +88,6 @@ class voms {
                 port   => 15001,
                 dn     => ["/DC=ch/DC=cern/OU=computers/CN=lcg-voms.cern.ch"],
                 ca_dn  => ["/DC=ch/DC=cern/CN=CERN Trusted Certification Authority"];
-        }
-
-        voms::base::group { "voms_atlas_cern":
-            file     => "/opt/edg/etc/edg-mkgridmap.conf",
-            voms_uri => "vomss://voms.cern.ch:8443/voms/atlas?/atlas",
-            vo       => "atlas",
         }
     }
 
@@ -135,16 +117,6 @@ class voms {
                 ca_dn  => ["/DC=ch/DC=cern/CN=CERN Trusted Certification Authority"];
         }
 
-        voms::base::group { 
-            "voms_dteam_cern":
-                file     => "/opt/edg/etc/edg-mkgridmap.conf",
-                voms_uri => "vomss://voms.cern.ch:8443/voms/dteam?/dteam",
-                vo       => "dteam";
-            "voms_dteam_tbed":
-                file     => "/opt/edg/etc/edg-mkgridmap.conf",
-                voms_uri => "vomss://lxbra2309.cern.ch:8443/voms/dteam?/dteam",
-                vo       => "dteam";
-        }
     }
 }
 
