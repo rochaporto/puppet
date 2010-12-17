@@ -103,6 +103,18 @@ class voms {
                 port   => 15001,
                 dn     => ["/DC=ch/DC=cern/OU=computers/CN=voms.cern.ch"],
                 ca_dn  => ["/DC=ch/DC=cern/CN=CERN Trusted Certification Authority"];
+            "voms_dteam_greece":
+                vo     => "dteam",
+                server => "voms.hellasgrid.gr",
+                port   => 15001,
+                dn     => ["/C=GR/O=HellasGrid/OU=hellasgrid.gr/CN=voms.hellasgrid.gr"],
+                ca_dn  => ["/C=GR/O=HellasGrid/OU=Certification Authorities/CN=HellasGrid CA 2006"];
+            "voms_dteam_greece2":
+                vo     => "dteam",
+                server => "voms2.hellasgrid.gr",
+                port   => 15001,
+                dn     => ["/C=GR/O=HellasGrid/OU=hellasgrid.gr/CN=voms2.hellasgrid.gr"],
+                ca_dn  => ["/C=GR/O=HellasGrid/OU=Certification Authorities/CN=HellasGrid CA 2006"];
             "voms_dteam_lcg":
                 vo     => "dteam",
                 server => "lcg-voms.cern.ch",
