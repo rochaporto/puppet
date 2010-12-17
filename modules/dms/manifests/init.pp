@@ -47,4 +47,30 @@ class dms {
                 enabled  => 1,
         }
     }
+
+    class build {
+        $build_user = "builder"
+
+        package { ["rpm-build", "yum-utils"]: ensure => latest, }
+
+        user { "$build_user":
+            comment    => "dms build user",
+            ensure     => present,
+            managehome => true,
+        }
+        
+        file { ["/home/$build_user/rpm", "/home/$build_user/rpm/BUILD", "/home/$build_user/rpm/RPMS", 
+                "/home/$build_user/rpm/SOURCES", "/home/$build_user/rpm/SPECS", "/home/$build_user/rpm/SRPMS"]:
+            owner   => $build_user,
+            ensure  => directory,
+            require => User["$build_user"],
+        }
+
+        file { "/home/$build_user/.rpmmacros":
+            owner   => $build_user,
+            ensure  => present,
+            content => template("dms/rpmmacros"),
+            require => User["$build_user"],
+        }
+    }
 }

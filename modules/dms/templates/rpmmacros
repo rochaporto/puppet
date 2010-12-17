@@ -1,0 +1,2 @@
+%packager IT/GT/DMS <it-dep-gt-dms@cern.ch>
+%_topdir  /home/<%= build_user %>/rpm
