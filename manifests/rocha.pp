@@ -86,7 +86,6 @@ node "rocha-slc5.cern.ch" {
     include lcgutil::client
     include dpm::client
     include dpm::dteam
-    include glite::nfs::client
 
     # setup supported domain/vo(s)
     dpm::headnode::domain { "cern.ch": require => Service["dpns"], }
