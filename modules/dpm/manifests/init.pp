@@ -540,7 +540,23 @@ class dpm {
     class client {
         include glite
 
-        package { "dpm": ensure => latest, notify => Exec["glite_ldconfig"], }
+        package { 
+            "dpm": 
+                ensure => latest, 
+                notify => Exec["glite_ldconfig"];
+            "vdt_globus_essentials": 
+                ensure => latest, 
+                notify => Exec["glite_ldconfig"];
+        }
+
+        file {
+            "/etc/profile.d/dpm.sh":
+                owner  => root,
+                group  => root,
+                mode   => 644,
+                ensure => present,
+                content => template("dpm/dpm-profile.erb");
+        }
     }
 
     class headnode {
@@ -687,7 +703,7 @@ class dpm {
         glite::gridmap::group { 
             "voms_dteam_cern":
                 file     => "/opt/edg/etc/edg-mkgridmap.conf",
-                voms_uri => "vomss://voms.cern.ch:8443/voms/dteam?/dteam",
+                voms_uri => "vomss://voms.hellasgrid.gr:8443/voms/dteam?/dteam",
                 map      => "nobody";
             "voms_dteam_tbed":
                 file     => "/opt/edg/etc/edg-mkgridmap.conf",
@@ -699,7 +715,7 @@ class dpm {
         glite::gridmap::group { 
             "dpm_dteam_cern":
                 file     => "/opt/lcg/etc/lcgdm-mkgridmap.conf",
-                voms_uri => "vomss://voms.cern.ch:8443/voms/dteam?/dteam",
+                voms_uri => "vomss://voms.hellasgrid.gr:8443/voms/dteam?/dteam",
                 map      => "dteam";
             "dpm_dteam_tbed":
                 file     => "/opt/lcg/etc/lcgdm-mkgridmap.conf",

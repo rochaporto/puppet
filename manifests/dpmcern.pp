@@ -126,3 +126,11 @@ node 'dpm02.cern.ch', 'dpm03.cern.ch' inherits dpm-service {
     dpm::disknode::loopback { "dpmfs2": fs => "/dpmfs2", blocks => 10000, }
     dpm::disknode::filesystem { "dpmfs2": fs => "/dpmfs2", pool => 'pool1', }
 }
+
+#
+# DPM Client Node
+#
+node 'dpm04.cern.ch' inherits dpm-service {
+    include dpm::client
+    include voms::client
+}
