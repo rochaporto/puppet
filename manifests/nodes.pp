@@ -136,3 +136,9 @@ node 'vmdm0002.cern.ch', 'vmdm0009.cern.ch' inherits service {
     dpm::disknode::filesystem { "dpmfs2": fs => "/dpmfs2", pool => 'pool1', }
 }
 
+#
+# DMS Build Node
+#
+node 'vmdm0006.cern.ch' {
+    include dms::build
+}
