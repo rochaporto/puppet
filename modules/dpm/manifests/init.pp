@@ -134,15 +134,17 @@ class dpm {
     }
 
     class base {
-        include glite
-        include dpm::lcgdmmap
-        
         package { 
             "vdt_globus_essentials": 
                 ensure => latest, 
                 notify => Exec["glite_ldconfig"]
         }
+    }
 
+    class server inherits base {
+        include glite
+        include dpm::lcgdmmap
+        
         group { "dpmmgr":
             gid    => 151, 
             ensure => present,
@@ -233,7 +235,7 @@ class dpm {
         }
     }
 
-    class dpmserver inherits base {
+    class dpmserver inherits server {
         include mysql::server
 
         package { "DPM-server-mysql":
@@ -313,7 +315,7 @@ class dpm {
 
     }
 
-    class nameserver inherits base {
+    class nameserver inherits server {
         include mysql::server
 
         package { "DPM-name-server-mysql":
@@ -394,7 +396,7 @@ class dpm {
     }
 		
 
-    class srm inherits base {
+    class srm inherits server {
         include mysql::server
 
         package { ["DPM-srm-server-mysql"]: ensure=> latest, notify => Exec["glite_ldconfig"], }
@@ -440,7 +442,7 @@ class dpm {
         }
     }
 
-    class gridftp inherits base {
+    class gridftp inherits server {
         # TODO: dpm-devel only need due to missing dep in DPM-DSI
         package { ["DPM-DSI", "vdt_globus_data_server", "dpm-devel"]: 
             ensure=> latest,
@@ -487,7 +489,7 @@ class dpm {
         }
     }
 
-    class rfio inherits base {
+    class rfio inherits server {
         package { ["DPM-rfio-server"]: ensure=> latest, notify => Exec["glite_ldconfig"], }
 
         file { 
@@ -537,14 +539,11 @@ class dpm {
         }
     }
 
-    class client {
+    class client inherits base {
         include glite
 
         package { 
             "dpm": 
-                ensure => latest, 
-                notify => Exec["glite_ldconfig"];
-            "vdt_globus_essentials": 
                 ensure => latest, 
                 notify => Exec["glite_ldconfig"];
         }
