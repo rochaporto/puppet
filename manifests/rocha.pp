@@ -73,7 +73,7 @@ node "rocha-slc5.cern.ch" {
 
     Package { 
         require => Yumrepo[
-            "dpm-mysql-unstable-etics", "lcgutil-head-etics", "epel", "glite-global-etics", "nfsv4.1"
+            "lcgdm-unstable-etics", "lcgutil-head-etics", "epel", "glite-global-etics", "nfsv4.1"
         ],
     }
 

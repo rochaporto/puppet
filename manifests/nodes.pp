@@ -77,7 +77,7 @@ node default {
     include cern::base::hostcert
     include cern::base::afs
 
-    Package { require => Yumrepo["dpm-mysql-unstable-etics", "epel"] }
+    Package { require => Yumrepo["lcgdm-unstable-etics", "epel"] }
 }
 
 node service inherits default {

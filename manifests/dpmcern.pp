@@ -72,7 +72,7 @@ $disk_nodes = ["dpm02.cern.ch dpm03.cern.ch"]
 # Generic node definitions
 #
 node cern-service {
-    Package { require => Yumrepo["dpm-mysql-unstable-etics", "epel"] }
+    Package { require => Yumrepo["lcgdm-unstable-etics", "epel"] }
 
     include dms::unstable
     include glite::gridmap
@@ -84,7 +84,7 @@ node dpm-service inherits cern-service {
     include voms::atlas
     include voms::dteam
  
-    cern::base::afs::user { ["rocha"]: }
+    cern::base::afs::user { ["rocha","aalvarez","prodrigu","baud","okeeble"]: }
 }
 
 #
