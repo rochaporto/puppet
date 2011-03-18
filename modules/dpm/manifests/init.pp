@@ -603,9 +603,8 @@ class dpm {
             changes => [
                 "set /files/etc/auto.master/00/mnt /dpm",
                 "set /files/etc/auto.master/00/config /etc/auto.dpm",
-                "set /files/etc/auto.master/00/options --timeout=600",
             ],
-            onlyif  => "match /files/etc/auto.master/*[mnt = '/dpm'] size == 0",
+            onlyif  => "match /files/etc/auto.master/*[mnt = '/dpm' and config = '/etc/auto.dpm'] size == 0",
             require => [
                 File["/usr/share/augeas/lenses/dist/autofs.aug"],
                 File["/dpm"],
