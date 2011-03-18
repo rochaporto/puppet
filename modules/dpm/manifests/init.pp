@@ -551,11 +551,67 @@ class dpm {
 
         file {
             "/etc/profile.d/dpm.sh":
-                owner  => root,
-                group  => root,
-                mode   => 644,
-                ensure => present,
+                owner   => root,
+                group   => root,
+                mode    => 644,
+                ensure  => present,
                 content => template("dpm/dpm-profile.erb");
+        }
+
+    }
+
+    class nfsclient inherits client {
+        include glite::nfs::client
+
+        package { "autofs": ensure => latest, }
+
+        file {
+            "/usr/share/augeas/lenses/dist/autofs.aug":
+                owner   => root,
+                group   => root,
+                mode    => 744,
+                ensure  => present,
+                content => template("dpm/autofs.aug");
+            "/etc/auto.master":
+                owner   => root,
+                group   => root,
+                mode    => 644,
+                ensure  => present;
+            "/etc/auto.dpm":
+                owner   => root,
+                group   => root,
+                mode    => 644,
+                ensure  => present,
+                content => template("dpm/auto.dpm"),
+                require => Augeas["automaster_augeas"];
+            "/dpm":
+                owner   => root,
+                group   => root,
+                mode    => 644,
+                ensure  => directory;
+        }
+
+        service { "autofs":
+            enable     => true,
+            ensure     => running,
+            hasrestart => true,
+            hasstatus  => true,
+            subscribe  => File["/etc/auto.master"],
+            require    => [ Package["autofs"] ],
+        }
+
+        augeas { "automaster_augeas":
+            changes => [
+                "set /files/etc/auto.master/00/mnt /dpm",
+                "set /files/etc/auto.master/00/config /etc/auto.dpm",
+                "set /files/etc/auto.master/00/options --timeout=600",
+            ],
+            onlyif  => "match /files/etc/auto.master/*[mnt = '/dpm'] size == 0",
+            require => [
+                File["/usr/share/augeas/lenses/dist/autofs.aug"],
+                File["/dpm"],
+            ],
+            notify  => Service["autofs"],
         }
     }
 
