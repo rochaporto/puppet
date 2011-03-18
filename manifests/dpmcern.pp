@@ -131,6 +131,6 @@ node 'dpm02.cern.ch', 'dpm03.cern.ch' inherits dpm-service {
 # DPM Client Node
 #
 node 'dpm04.cern.ch' inherits dpm-service {
-    include dpm::client
+    include dpm::nfsclient
     include voms::client
 }
