@@ -40,9 +40,9 @@ class dms {
                 gpgcheck => 0,
                 enabled  => 1,
                 protect  => 0;
-            "nfsv4.1":
+            "nfsv41":
                 descr    => "Scientific Linux pNFS enabled kernel",
-                baseurl  => "http://www.dcache.org/chimera/repo",
+                baseurl  => "https://grid-deployment.web.cern.ch/grid-deployment/dms/yum/sl5/nfs41",
                 gpgcheck => 0,
                 enabled  => 1,
         }

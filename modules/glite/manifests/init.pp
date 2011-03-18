@@ -154,9 +154,10 @@ class glite {
 
     class nfs {
         class client {
-            package { ["nfs-utils-lib"]: ensure => absent, }
-
-            package { ["kernel-pnfs", "nfs-utils"]: ensure => latest, }
+            package { 
+                "kernel-pnfs": ensure => latest;
+                "nfs-utils": ensure => "1.2.3-1";
+            }
         }
     }
 }
