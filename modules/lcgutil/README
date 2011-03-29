@@ -1,0 +1,5 @@
+LCGUTIL includes a set of libraries and APIs to ease the access to grid resources.
+
+Most importantly, it provides all required tools to access storage resources,
+be it from a command line via the CLI, or via scripts or other programs written
+in C, C++, Python or Perl.
