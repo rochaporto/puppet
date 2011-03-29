@@ -76,15 +76,15 @@ node cern-service {
 
     include dms::unstable
     include glite::gridmap
-    include cern::base::hostcert
-    include cern::base::afs
+    include cern::hostcert
+    include cern::afs
 }
 
 node dpm-service inherits cern-service {
     include voms::atlas
     include voms::dteam
  
-    cern::base::afs::user { ["rocha","aalvarez","prodrigu","baud","okeeble"]: }
+    cern::afs::user { ["rocha","aalvarez","prodrigu","baud","okeeble"]: }
 }
 
 #
