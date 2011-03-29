@@ -1,0 +1,5 @@
+CERN IT/GT/DMS is the data management section of the CERN Grid Technology group.
+
+This module provides resources required for the setup and usage of the
+section's internal testbed, along with other utilities for internal
+section setups.
