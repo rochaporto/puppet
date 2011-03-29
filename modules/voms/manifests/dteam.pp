@@ -12,7 +12,7 @@
 #
 # CERN IT/GT/DMS <it-dep-gt-dms@cern.ch>
 #
-class dteam {
+class voms::dteam {
   include voms
 
   voms::vo { "dteam": }

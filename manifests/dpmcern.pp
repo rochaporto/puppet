@@ -5,6 +5,7 @@ import 'cern'
 import 'dms'
 import 'dpm'
 import 'voms'
+import 'voms'
 
 #
 # Cluster configuration (global values)
@@ -72,65 +73,66 @@ $disk_nodes = ["dpm02.cern.ch dpm03.cern.ch"]
 # Generic node definitions
 #
 node cern-service {
-    Package { require => Yumrepo["lcgdm-unstable-etics", "epel"] }
+  Package { require => Yumrepo["lcgdm-unstable-etics", "epel"] }
 
-    include dms::unstable
-    include glite::gridmap
-    include cern::hostcert
-    include cern::afs
+  include dms::unstable
+  include glite::gridmap
+  include cern::slc5
+  include cern::hostcert
+  include cern::afs
 }
 
 node dpm-service inherits cern-service {
-    include voms::atlas
-    include voms::dteam
- 
-    cern::afs::user { ["rocha","aalvarez","prodrigu","baud","okeeble"]: }
+  include voms::atlas
+  include voms::dteam
+
+  cern::afs::user { ["rocha","aalvarez","prodrigu","baud","okeeble"]: }
 }
 
 #
 # DPM Head Node(s)
 #
 node 'dpm01.cern.ch' inherits dpm-service {
-    include dpm::headnode
+  include dpm::headnode
 
-    # setup supported domain/vo(s)
-    dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
-    dpm::headnode::vo { 'dteam': domain => 'cern.ch', require => Dpm::Headnode::Domain['cern.ch'], }
+  # setup supported domain/vo(s)
+  dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
+  dpm::headnode::vo { 'dteam': domain => 'cern.ch', require => Dpm::Headnode::Domain['cern.ch'], }
 
-    # setup pools
-    dpm::headnode::pool { 'pool1': require => Service['dpm'] }
-    dpm::headnode::pool { 'pool2': require => Service['dpm'] }
+  # setup pools
+  dpm::headnode::pool { 'pool1': require => Service['dpm'] }
+  dpm::headnode::pool { 'pool2': require => Service['dpm'] }
 
-    dpm::shift::trust_value { 
-	"tvalue_dpns_02":
-            component => "DPNS", host => "dpm02.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpns"];
-	"tvalue_dpm_02":
-            component => "DPM", host => "dpm02.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpm"];
-	"tvalue_dpns_03":
-            component => "DPNS", host => "dpm03.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpns"];
-	"tvalue_dpm_03":
-            component => "DPM", host => "dpm03.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpm"];
-    }
+  dpm::shift::trust_value { 
+    "tvalue_dpns_02":
+        component => "DPNS", host => "dpm02.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpns"];
+    "tvalue_dpm_02":
+        component => "DPM", host => "dpm02.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpm"];
+    "tvalue_dpns_03":
+        component => "DPNS", host => "dpm03.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpns"];
+    "tvalue_dpm_03":
+        component => "DPM", host => "dpm03.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpm"];
+  }
 }
 
 #
 # DPM Disk Node(s)
 #
 node 'dpm02.cern.ch', 'dpm03.cern.ch' inherits dpm-service {
-    include dpm::disknode
+  include dpm::disknode
 
-    # setup filesystems (we use loopback partitions as this is a testing VM machine)
-    dpm::disknode::loopback { "dpmfs1": fs => "/dpmfs1", blocks => 10000, }
-    dpm::disknode::filesystem { "dpmfs1": fs => "/dpmfs1", pool => 'pool1', }
+  # setup filesystems (we use loopback partitions as this is a testing VM machine)
+  dpm::disknode::loopback { "dpmfs1": fs => "/dpmfs1", blocks => 10000, }
+  dpm::disknode::filesystem { "dpmfs1": fs => "/dpmfs1", pool => 'pool1', }
 
-    dpm::disknode::loopback { "dpmfs2": fs => "/dpmfs2", blocks => 10000, }
-    dpm::disknode::filesystem { "dpmfs2": fs => "/dpmfs2", pool => 'pool1', }
+  dpm::disknode::loopback { "dpmfs2": fs => "/dpmfs2", blocks => 10000, }
+  dpm::disknode::filesystem { "dpmfs2": fs => "/dpmfs2", pool => 'pool1', }
 }
 
 #
 # DPM Client Node
 #
 node 'dpm04.cern.ch' inherits dpm-service {
-    include dpm::nfsclient
-    include voms::client
+  include dpm::nfsclient
+  include voms::client
 }
