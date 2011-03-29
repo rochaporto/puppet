@@ -1,0 +1,8 @@
+This module provides puppet resources to manage entities related to the gLite
+Disk Pool Manager (DPM).
+
+It includes classes and definitions for both client and server side, and it
+covers all DPM related services / daemons - nameserver, rfio, stager, etc.
+
+It also includes some basic node definitions which can be directly reused
+in the top manifest declarations.
