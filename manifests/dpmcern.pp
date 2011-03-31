@@ -87,6 +87,7 @@ node dpm-service inherits cern-service {
   include voms::dteam
 
   cern::afs::user { ["rocha","aalvarez","prodrigu","baud","okeeble"]: }
+  cern::keytab { "keytab-nfs": serviceType => "nfs" }
 }
 
 #
