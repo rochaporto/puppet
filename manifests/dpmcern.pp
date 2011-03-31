@@ -66,6 +66,19 @@ $dpm_ns_configfile = "/opt/lcg/etc/NSCONFIG"
 $dpm_ns_logfile = "/var/log/dpns/log" 
 $dpm_ns_numthreads = 20 
 
+#
+# NFS frontend configuration
+#
+$dpm_nfs_exportid = 77
+$dpm_nfs_exportpath = "/dpm/cern.ch"
+$dpm_nfs_root_access = "localhost"
+$dpm_nfs_pseudopath = "/"
+$dpm_nfs_accesstype = "RW"
+$dpm_nfs_sectype = "sys,krb5,krb5i,krb5p"
+$dpm_nfs_fsid = "100.1"
+$dpm_nfs_cachefiledata = "FALSE"
+$dpm_nfs_maxfscalls = 10
+
 # TODO: replace this with an exported resource, so that disk nodes simply publish themselves
 $disk_nodes = ["dpm02.cern.ch dpm03.cern.ch"]
 
@@ -95,6 +108,7 @@ node dpm-service inherits cern-service {
 #
 node 'dpm01.cern.ch' inherits dpm-service {
   include dpm::headnode
+  include dpm::nfsserver
 
   # setup supported domain/vo(s)
   dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
