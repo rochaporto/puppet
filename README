@@ -20,11 +20,11 @@ WHAT IS DPM
 
 DOCUMENTATION
 
-  Modules are organized in the recommended puppet structure, inside 'modules':
-  <module-name>/files|lib|manifests|templates
+  In the 'manifests' directory you can find one file with the configuration of
+  each of our different testbed sites at CERN IT/GT/DMS.
 
-  In addition multiple configurations are available which corresponding to the
-  different testbed sites we run ourselves at CERN IT/GT/DMS.
+  These manifests rely on a set of modules. For instructions on how to setup
+  these modules, check https://svnweb.cern.ch/trac/lcgdm/wiki/Dpm/Admin/Puppet.
 
 REQUIREMENTS
 
