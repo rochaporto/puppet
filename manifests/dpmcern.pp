@@ -5,11 +5,13 @@ import 'cern'
 import 'dms'
 import 'dpm'
 import 'voms'
-import 'voms'
+import 'nagios'
 
 #
 # Cluster configuration (global values)
 #
+$dpm_user = "dpmmgr"
+$dpm_group = "dpmmgr"
 $dpm_ns_host = "dpm01.cern.ch"
 $dpm_host = "dpm01.cern.ch"
 
@@ -79,6 +81,13 @@ $dpm_nfs_fsid = "100.1"
 $dpm_nfs_cachefiledata = "FALSE"
 $dpm_nfs_maxfscalls = 10
 
+#
+# SEMsg DPM configuration
+#
+$semsg_dpm_run = "yes"
+$semsg_dpm_coredump = "yes"
+$semsg_dpm_brokeruri = "tcp://dev.msg.cern.ch:6166?wireFormat=openwire"
+
 # TODO: replace this with an exported resource, so that disk nodes simply publish themselves
 $disk_nodes = ["dpm02.cern.ch dpm03.cern.ch"]
 
@@ -109,6 +118,8 @@ node dpm-service inherits cern-service {
 node 'dpm01.cern.ch' inherits dpm-service {
   include dpm::headnode
   include dpm::nfsserver
+  include dpm::semsgserver
+  include nagios::target
 
   # setup supported domain/vo(s)
   dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
@@ -127,6 +138,10 @@ node 'dpm01.cern.ch' inherits dpm-service {
         component => "DPNS", host => "dpm03.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpns"];
     "tvalue_dpm_03":
         component => "DPM", host => "dpm03.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpm"];
+    "tvalue_dpns_pcitgs10":
+        component => "DPNS", host => "pcitgs10.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpns"];
+    "tvalue_dpm_pcitgs10":
+        component => "DPM", host => "pcitgs10.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpm"];
   }
 }
 
@@ -136,12 +151,20 @@ node 'dpm01.cern.ch' inherits dpm-service {
 node 'dpm02.cern.ch', 'dpm03.cern.ch' inherits dpm-service {
   include dpm::disknode
 
+  package { ["nrpe", "nagios-plugins-nrpe"]: }
+
   # setup filesystems (we use loopback partitions as this is a testing VM machine)
   dpm::disknode::loopback { "dpmfs1": fs => "/dpmfs1", blocks => 10000, }
   dpm::disknode::filesystem { "dpmfs1": fs => "/dpmfs1", pool => 'pool1', }
 
   dpm::disknode::loopback { "dpmfs2": fs => "/dpmfs2", blocks => 10000, }
   dpm::disknode::filesystem { "dpmfs2": fs => "/dpmfs2", pool => 'pool1', }
+
+  dpm::shift::trust_value { 
+    "trustvalue_rfiod_pcitgs10": 
+      component => "RFIOD", host => "pcitgs10.cern.ch", all => true, 
+      require => Dpm::Shift::Trust_entry["trustentry_rfiod_all"];
+  }
 }
 
 #
@@ -150,4 +173,8 @@ node 'dpm02.cern.ch', 'dpm03.cern.ch' inherits dpm-service {
 node 'dpm04.cern.ch' inherits dpm-service {
   include dpm::nfsclient
   include voms::client
+}
+
+node 'vmdm0006.cern.ch' {
+  include nagios::master
 }
