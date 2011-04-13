@@ -119,7 +119,7 @@ node 'dpm01.cern.ch' inherits dpm-service {
   include dpm::headnode
   include dpm::nfsserver
   include dpm::semsgserver
-  include nagios::target
+  include dpm::nagios::headnode
 
   # setup supported domain/vo(s)
   dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
