@@ -127,7 +127,7 @@ node 'dpm01.cern.ch' inherits dpm-service {
 
   # setup pools
   dpm::headnode::pool { 'pool1': require => Service['dpm'] }
-  dpm::headnode::pool { 'pool2': require => Service['dpm'] }
+  #dpm::headnode::pool { 'pool2': require => Service['dpm'] }
 
   dpm::shift::trust_value { 
     "tvalue_dpns_02":
@@ -150,8 +150,7 @@ node 'dpm01.cern.ch' inherits dpm-service {
 #
 node 'dpm02.cern.ch', 'dpm03.cern.ch' inherits dpm-service {
   include dpm::disknode
-
-  package { ["nrpe", "nagios-plugins-nrpe"]: }
+  include dpm::nagios::disknode
 
   # setup filesystems (we use loopback partitions as this is a testing VM machine)
   dpm::disknode::loopback { "dpmfs1": fs => "/dpmfs1", blocks => 10000, }
