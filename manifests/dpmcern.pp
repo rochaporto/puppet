@@ -171,9 +171,11 @@ node 'dpm02.cern.ch', 'dpm03.cern.ch' inherits dpm-service {
 #
 node 'dpm04.cern.ch' inherits dpm-service {
   include dpm::nfsclient
+  include dpm::nagios::client
   include voms::client
 }
 
 node 'vmdm0006.cern.ch' {
   include nagios::master
+
 }
