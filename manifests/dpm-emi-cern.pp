@@ -1,4 +1,4 @@
-# dpmcern.pp
+# dpm-emi-cern.pp
 import 'dpmcern.passwd'
 
 import 'cern'
@@ -10,17 +10,14 @@ import 'nagios'
 #
 # Generic node definitions
 #
-node cern-service {
-
-
+node cern-emi-service {
 #
 # Cluster configuration (global values)
 #
-$grid_flavour = "glite"
 $dpm_user = "dpmmgr"
 $dpm_group = "dpmmgr"
-$dpm_ns_host = "dpm01.cern.ch"
-$dpm_host = "dpm01.cern.ch"
+$dpm_ns_host = "dpm-emi01.cern.ch"
+$dpm_host = "dpm-emi01.cern.ch"
 
 #
 # DPM server configuration
@@ -30,7 +27,7 @@ $dpm_dbhost = 'localhost'
 $dpm_run = "yes"
 $dpm_ulimit = 4096
 $dpm_coredump = "yes"
-$dpm_configfile = "/opt/lcg/etc/DPMCONFIG"
+$dpm_configfile = "/usr/etc/DPMCONFIG"
 $dpm_logfile = "/var/log/dpm/log"
 $dpm_gridmapdir = "/etc/grid-security/gridmapdir"
 
@@ -71,7 +68,7 @@ $dpm_ns_run = "yes"
 $dpm_ns_readonly = "no" 
 $dpm_ns_ulimit = 4096 
 $dpm_ns_coredump = "yes" 
-$dpm_ns_configfile = "/opt/lcg/etc/NSCONFIG" 
+$dpm_ns_configfile = "/usr/etc/NSCONFIG" 
 $dpm_ns_logfile = "/var/log/dpns/log" 
 $dpm_ns_numthreads = 20 
 
@@ -96,20 +93,18 @@ $semsg_dpm_coredump = "yes"
 $semsg_dpm_brokeruri = "tcp://dev.msg.cern.ch:6166?wireFormat=openwire"
 
 # TODO: replace this with an exported resource, so that disk nodes simply publish themselves
-$disk_nodes = ["dpm02.cern.ch dpm03.cern.ch"]
+$disk_nodes = ["dpm-emi02.cern.ch dpm-emi03.cern.ch"]
 
+  Package { require => Yumrepo["lcgdm-head-emi-etics", "emi-base", "epel"] }
 
-
-  Package { require => Yumrepo["lcgdm-unstable-etics", "epel"] }
-
-  include dms::unstable
+  include dms::emi::head
   include grid-common::gridmap
   include cern::slc5
   include cern::hostcert
   include cern::afs
 }
 
-node dpm-service inherits cern-service {
+node dpm-emi-service inherits cern-emi-service {
   include voms::atlas
   include voms::dteam
 
@@ -120,11 +115,9 @@ node dpm-service inherits cern-service {
 #
 # DPM Head Node(s)
 #
-node 'dpm01.cern.ch' inherits dpm-service {
+node 'dpm-emi01.cern.ch' inherits dpm-emi-service {
   include dpm::headnode
-  include dpm::nfsserver
-  include dpm::semsgserver
-  include dpm::nagios::headnode
+  #include dpm::nagios::headnode
 
   # setup supported domain/vo(s)
   dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
@@ -132,17 +125,16 @@ node 'dpm01.cern.ch' inherits dpm-service {
 
   # setup pools
   dpm::headnode::pool { 'pool1': require => Service['dpm'] }
-  #dpm::headnode::pool { 'pool2': require => Service['dpm'] }
 
   dpm::shift::trust_value { 
     "tvalue_dpns_02":
-        component => "DPNS", host => "dpm02.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpns"];
+        component => "DPNS", host => "dpm-emi02.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpns"];
     "tvalue_dpm_02":
-        component => "DPM", host => "dpm02.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpm"];
+        component => "DPM", host => "dpm-emi02.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpm"];
     "tvalue_dpns_03":
-        component => "DPNS", host => "dpm03.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpns"];
+        component => "DPNS", host => "dpm-emi03.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpns"];
     "tvalue_dpm_03":
-        component => "DPM", host => "dpm03.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpm"];
+        component => "DPM", host => "dpm-emi03.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpm"];
     "tvalue_dpns_pcitgs10":
         component => "DPNS", host => "pcitgs10.cern.ch", require => Dpm::Shift::Trust_entry["trustentry_dpns"];
     "tvalue_dpm_pcitgs10":
@@ -157,9 +149,9 @@ node 'dpm01.cern.ch' inherits dpm-service {
 #
 # DPM Disk Node(s)
 #
-node 'dpm02.cern.ch', 'dpm03.cern.ch' inherits dpm-service {
+node 'dpm-emi02.cern.ch', 'dpm-emi03.cern.ch' inherits dpm-emi-service {
   include dpm::disknode
-  include dpm::nagios::disknode
+  #include dpm::nagios::disknode
 
   # setup filesystems (we use loopback partitions as this is a testing VM machine)
   dpm::disknode::loopback { "dpmfs1": fs => "/dpmfs1", blocks => 10000, }
@@ -181,13 +173,8 @@ node 'dpm02.cern.ch', 'dpm03.cern.ch' inherits dpm-service {
 #
 # DPM Client Node
 #
-node 'dpm04.cern.ch' inherits dpm-service {
+node 'dpm-emi04.cern.ch' inherits dpm-emi-service {
   include dpm::nfsclient
-  include dpm::nagios::client
+  #include dpm::nagios::client
   include voms::client
-}
-
-node 'vmdm0006.cern.ch' {
-  include nagios::master
-
 }
