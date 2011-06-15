@@ -89,6 +89,12 @@ $dpm_nfs_cachefiledata = "FALSE"
 $dpm_nfs_maxfscalls = 10
 
 #
+# DAV frontend configuration
+#
+$dpm_dav_base  = "/"
+$dpm_dav_flags = "Write"
+
+#
 # SEMsg DPM configuration
 #
 $semsg_dpm_run = "yes"
@@ -125,6 +131,7 @@ node 'dpm01.cern.ch' inherits dpm-service {
   include dpm::nfsserver
   include dpm::semsgserver
   include dpm::nagios::headnode
+  include dpm::dav
 
   # setup supported domain/vo(s)
   dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
@@ -160,6 +167,7 @@ node 'dpm01.cern.ch' inherits dpm-service {
 node 'dpm02.cern.ch', 'dpm03.cern.ch' inherits dpm-service {
   include dpm::disknode
   include dpm::nagios::disknode
+  include dpm::dav
 
   # setup filesystems (we use loopback partitions as this is a testing VM machine)
   dpm::disknode::loopback { "dpmfs1": fs => "/dpmfs1", blocks => 10000, }
@@ -185,6 +193,7 @@ node 'dpm04.cern.ch' inherits dpm-service {
   include dpm::nfsclient
   include dpm::nagios::client
   include voms::client
+  include lcgutil::client
 }
 
 node 'vmdm0006.cern.ch' {
