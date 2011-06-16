@@ -108,7 +108,7 @@ node dpm-emi-service inherits cern-emi-service {
   include voms::atlas
   include voms::dteam
 
-  cern::afs::user { ["rocha","aalvarez","prodrigu","baud","okeeble"]: }
+  cern::afs::user { ["rocha","aalvarez","prodrigu","baud","okeeble","abeche"]: }
   cern::keytab { "keytab-nfs": serviceType => "nfs" }
 }
 
@@ -122,6 +122,7 @@ node 'dpm-emi01.cern.ch' inherits dpm-emi-service {
   # setup supported domain/vo(s)
   dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
   dpm::headnode::vo { 'dteam': domain => 'cern.ch', require => Dpm::Headnode::Domain['cern.ch'], }
+  dpm::headnode::vo { 'atlas': domain => 'cern.ch', require => Dpm::Headnode::Domain['cern.ch'], }
 
   # setup pools
   dpm::headnode::pool { 'pool1': require => Service['dpm'] }
@@ -174,7 +175,9 @@ node 'dpm-emi02.cern.ch', 'dpm-emi03.cern.ch' inherits dpm-emi-service {
 # DPM Client Node
 #
 node 'dpm-emi04.cern.ch' inherits dpm-emi-service {
-  include dpm::nfsclient
+  include lcgutil::client
+  #include dpm::nfsclient
+  include dpm::client
   #include dpm::nagios::client
   include voms::client
 }

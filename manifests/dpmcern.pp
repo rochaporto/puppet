@@ -136,6 +136,7 @@ node 'dpm01.cern.ch' inherits dpm-service {
   # setup supported domain/vo(s)
   dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
   dpm::headnode::vo { 'dteam': domain => 'cern.ch', require => Dpm::Headnode::Domain['cern.ch'], }
+  dpm::headnode::vo { 'atlas': domain => 'cern.ch', require => Dpm::Headnode::Domain['cern.ch'], }
 
   # setup pools
   dpm::headnode::pool { 'pool1': require => Service['dpm'] }
