@@ -79,14 +79,15 @@ $dpm_ns_numthreads = 20
 # NFS frontend configuration
 #
 $dpm_nfs_exportid = 77
-$dpm_nfs_exportpath = "/dpm/cern.ch"
+$dpm_nfs_exportpath = "/"
 $dpm_nfs_root_access = "localhost"
 $dpm_nfs_pseudopath = "/"
 $dpm_nfs_accesstype = "RW"
-$dpm_nfs_sectype = "sys,krb5,krb5i,krb5p"
-$dpm_nfs_fsid = "100.1"
+$dpm_nfs_sectype = "sys"
+$dpm_nfs_fsid = "192.168"
 $dpm_nfs_cachefiledata = "FALSE"
 $dpm_nfs_maxfscalls = 10
+$dpm_nfs_loglevel = "NIV_DEBUG"
 
 #
 # DAV frontend configuration
@@ -131,7 +132,6 @@ node 'dpm01.cern.ch' inherits dpm-service {
   include dpm::nfsserver
   include dpm::semsgserver
   include dpm::nagios::headnode
-  include dpm::dav
 
   # setup supported domain/vo(s)
   dpm::headnode::domain { 'cern.ch': require => Service['dpns'], }
@@ -168,7 +168,7 @@ node 'dpm01.cern.ch' inherits dpm-service {
 node 'dpm02.cern.ch', 'dpm03.cern.ch' inherits dpm-service {
   include dpm::disknode
   include dpm::nagios::disknode
-  include dpm::dav
+  include dpm::nfsserver
 
   # setup filesystems (we use loopback partitions as this is a testing VM machine)
   dpm::disknode::loopback { "dpmfs1": fs => "/dpmfs1", blocks => 10000, }
