@@ -1,4 +1,6 @@
 # site.pp
-import 'dpmcern.pp'
-import 'dpm-emi-cern.pp'
-import 'rocha.pp'
+
+node "rocha-el6.cern.ch" {
+  include dms::nightlies::repo
+}
+
